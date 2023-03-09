@@ -1,4 +1,3 @@
-/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -129,14 +128,14 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 dummyFieldCOx.Add(elem.Key, Cox);
             }
 
-            Dictionary<int, double[]> dummyVelocityDivergenceAtElementGaussPoints =
-                new Dictionary<int, double[]>(comsolReader.ElementConnectivity.Count());
+            Dictionary<int, double[][]> dummyVelocityDivergenceAtElementGaussPoints =
+                new Dictionary<int, double[][]>(comsolReader.ElementConnectivity.Count());
             foreach (var elem in comsolReader.ElementConnectivity)
             {
-                var velocityDiv = new double[nGaussPoints];
+                var velocityDiv = new double[nGaussPoints][];
                 for (int i1 = 0; i1 < nGaussPoints; i1++)
                 {
-                    velocityDiv[i1] = SolidSpeed;
+                    velocityDiv[i1] = new double[] { SolidSpeed, SolidSpeed, SolidSpeed };
                 }
                 dummyVelocityDivergenceAtElementGaussPoints.Add(elem.Key, velocityDiv);
             }
@@ -224,7 +223,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 tCells[i1] = ((DOFSLog)timeStepResultsLog).DOFValues[model.GetNode(nodeIdToMonitor), coxMonitorDOF];
             }
             Assert.True(ResultChecker.CheckResults(tCells, expected_Tc_values(), 1E-6));
-            #1#
+             */
             CSVExporter.ExportVectorToCSV(tCells, "../../../Integration/Tc_nodes_mslv.csv");
         }
 
@@ -303,4 +302,3 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         }
     }
 }
-*/
