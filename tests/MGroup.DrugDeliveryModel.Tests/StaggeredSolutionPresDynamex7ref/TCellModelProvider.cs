@@ -27,7 +27,7 @@ public class TCellModelProvider
 
     private Dictionary<int, double> DomainCOx { get; }
 
-    private Dictionary<int, double[]> SolidVelocityDivergence { get; }
+    private Dictionary<int, double[][]> SolidVelocity { get; }
     private ComsolMeshReader Mesh { get; }
     private ConvectionDiffusionDof MonitorDOFType { get; }
     private int MonitorNodeId { get; }
@@ -36,7 +36,7 @@ public class TCellModelProvider
 
     private double InitialCondition { get; }
 
-    public TCellModelProvider(double k1, double k2, Dictionary<int, double> domainCOx, Dictionary<int, double[]> solidVelocityDivergence,
+    public TCellModelProvider(double k1, double k2, Dictionary<int, double> domainCOx, Dictionary<int, double[][]> solidVelocity,
         ComsolMeshReader mesh,
         ConvectionDiffusionDof tCellMonitorDOFType, int monitorNodeId,
         List<(BC, ConvectionDiffusionDof[], double[][], double[])> dirichletBCs,
@@ -46,7 +46,7 @@ public class TCellModelProvider
         K1 = k1;
         K2 = k2;
         DomainCOx = domainCOx;
-        SolidVelocityDivergence = solidVelocityDivergence;
+        SolidVelocity = solidVelocity;
         Mesh = mesh;
         MonitorDOFType = tCellMonitorDOFType;
         MonitorNodeId = monitorNodeId;
@@ -70,9 +70,9 @@ public class TCellModelProvider
 
         foreach (var elementConnectivity in Mesh.ElementConnectivity)
         {
-            var vs = SolidVelocityDivergence[elementConnectivity.Key];
-            convectionDomainCoefficients[elementConnectivity.Key] = new double[] { vs[0], vs[0], vs[0] };
-
+            var vs = SolidVelocity[elementConnectivity.Key];
+            convectionDomainCoefficients[elementConnectivity.Key] = new double[] { vs[0][0], vs[0][1], vs[0][2]};
+            
             var elementCOx = DomainCOx[elementConnectivity.Key];
             var dependentProductionCoefficient = (K1 * elementCOx) / (K2 + elementCOx);
             dependentProductionCoefficients[elementConnectivity.Key] = dependentProductionCoefficient;

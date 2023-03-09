@@ -54,6 +54,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private Dictionary<int, double> lambda;
         private Dictionary<int, double[][]> pressureTensorDivergenceAtElementGaussPoints;
         private Dictionary<int, double[]> div_vs;
+        private Dictionary<int, double[][]> SolidVelocityAtElementGaussPoints;
 
         private double timeStep;
         private double totalTime;
@@ -65,7 +66,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                                                  TCellModelProvider tCellModelProvider,
                                                  ComsolMeshReader comsolReader,
             Dictionary<int, double> lambda, Dictionary<int, double[][]> pressureTensorDivergenceAtElementGaussPoints,
-            Dictionary<int, double[]> div_vs, double timeStep, double totalTime, int incrementsPerStep)
+            Dictionary<int, double[]> div_vs, Dictionary<int, double[][]> velocityAtElementGaussPoints, double timeStep, double totalTime, int incrementsPerStep)
         {
             Eq9ModelProviderForStaggeredSolutionEx7Ref = solidPhaseProvider;
             eq78ModelProviderForCouplin = Eq78ModelProviderForStaggeredSolutionex7ref;
@@ -84,7 +85,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             this.pressureTensorDivergenceAtElementGaussPoints = pressureTensorDivergenceAtElementGaussPoints;
             this.lambda = lambda;
             this.div_vs = div_vs;
-
+            
+            this.SolidVelocityAtElementGaussPoints = velocityAtElementGaussPoints;
+            
             this.timeStep = timeStep;
             this.totalTime  = totalTime;
             this.incrementsPerStep = incrementsPerStep;
@@ -113,6 +116,17 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             foreach (var elem in reader.ElementConnectivity)
             {
                 div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
+            }
+            foreach (var elem in reader.ElementConnectivity)
+            {
+                SolidVelocityAtElementGaussPoints[elem.Key] =
+                    ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity;
+                SolidVelocityAtElementGaussPoints[elem.Key][0][0] =
+                    SolidVelocityAtElementGaussPoints[elem.Key][0][0] * 1000;
+                SolidVelocityAtElementGaussPoints[elem.Key][0][1] =
+                    SolidVelocityAtElementGaussPoints[elem.Key][0][1] * 1000;
+                SolidVelocityAtElementGaussPoints[elem.Key][0][2] =
+                    SolidVelocityAtElementGaussPoints[elem.Key][0][2] * 1000;
             }
             
             model = new Model[3];
@@ -157,6 +171,16 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 foreach (var elem in reader.ElementConnectivity)
                 {
                     div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
+                }
+                foreach (var elem in reader.ElementConnectivity)
+                {
+                    SolidVelocityAtElementGaussPoints[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity;
+                    SolidVelocityAtElementGaussPoints[elem.Key][0][0] =
+                        SolidVelocityAtElementGaussPoints[elem.Key][0][0] * 1000;
+                    SolidVelocityAtElementGaussPoints[elem.Key][0][1] =
+                        SolidVelocityAtElementGaussPoints[elem.Key][0][1] * 1000;
+                    SolidVelocityAtElementGaussPoints[elem.Key][0][2] =
+                        SolidVelocityAtElementGaussPoints[elem.Key][0][2] * 1000;
                 }
             }
 

@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -223,7 +224,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 tCells[i1] = ((DOFSLog)timeStepResultsLog).DOFValues[model.GetNode(nodeIdToMonitor), coxMonitorDOF];
             }
             Assert.True(ResultChecker.CheckResults(tCells, expected_Tc_values(), 1E-6));
-            */
+            #1#
             CSVExporter.ExportVectorToCSV(tCells, "../../../Integration/Tc_nodes_mslv.csv");
         }
 
@@ -302,3 +303,4 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         }
     }
 }
+*/

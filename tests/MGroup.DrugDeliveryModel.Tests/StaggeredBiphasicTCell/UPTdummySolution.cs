@@ -297,17 +297,16 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 velocityDivergenceAtElementGaussPoints.Add(elem.Key, velocityDiv);
             }
 
-            Dictionary<int, double[]> dummyVelocityDivergenceAtElementGaussPoints =
-                new Dictionary<int, double[]>(comsolReader.ElementConnectivity.Count());
+            Dictionary<int, double[][]> velocityAtGaussPoints =
+                new Dictionary<int, double[][]>(comsolReader.ElementConnectivity.Count());
             foreach (var elem in comsolReader.ElementConnectivity)
             {
-                var velocityDiv = new double[nGaussPoints];
+                var velocityDiv = new double[nGaussPoints][];
                 for (int i1 = 0; i1 < nGaussPoints; i1++)
                 {
-                    velocityDiv[i1] =  dummySolidVelovity;
-                    
-                }
-                dummyVelocityDivergenceAtElementGaussPoints.Add(elem.Key, velocityDiv);
+                    velocityDiv[i1] = new double[] { 0, 0, 0 };
+                };
+                velocityAtGaussPoints.Add(elem.Key, velocityDiv);
             }
 
             Dictionary<int, double> dummyFieldCOx =
@@ -375,12 +374,12 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
 
             //Create Model For TCell
-            var tCellModel = new TCellModelProvider(K1, K2, dummyFieldCOx, dummyVelocityDivergenceAtElementGaussPoints, comsolReader, tCellMonitorDOF, tCellMonitorID, tCellDirichletBC, tCellNeumannBC, initialTCellDensity);
+            var tCellModel = new TCellModelProvider(K1, K2, dummyFieldCOx, velocityAtGaussPoints, comsolReader, tCellMonitorDOF, tCellMonitorID, tCellDirichletBC, tCellNeumannBC, initialTCellDensity);
 
             
 
             var equationModel = new CoupledBiphasicTCellModelProvider(pressureModel, structuralModel, tCellModel, comsolReader, lambda,
-                pressureTensorDivergenceAtElementGaussPoints, velocityDivergenceAtElementGaussPoints, timeStep,
+                pressureTensorDivergenceAtElementGaussPoints, velocityDivergenceAtElementGaussPoints, velocityAtGaussPoints, timeStep,
                 totalTime, incrementsPertimeStep);
 
             var staggeredAnalyzer = new StepwiseStaggeredAnalyzer(equationModel.ParentAnalyzers,
