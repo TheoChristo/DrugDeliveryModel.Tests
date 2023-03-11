@@ -379,7 +379,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 LplSvl_tumor, LplSvl_host, pl, velocityDivergenceAtElementGaussPoints, pressureMonitorID, pressureMonitorDOF, pressureDirichletBC, pressureNeumannBC);
 
             //Create Model For Structural
-            var structuralModel = new Eq9ModelProviderForStaggeredSolutionEx7Ref(comsolReader, Sc, miNormal, kappaNormal, miTumor,
+            var structuralModel = new Eq9ModelProvider(comsolReader, Sc, miNormal, kappaNormal, miTumor,
                 kappaTumor, density, timeStep, totalTime, lambda, pressureTensorDivergenceAtElementGaussPoints,
                 structuralMonitorID, structuralMonitorDOF, structuralNeumannBC, structuralDirichletBC);
 
@@ -393,7 +393,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 totalTime, incrementsPertimeStep);
 
             var staggeredAnalyzer = new StepwiseStaggeredAnalyzer(equationModel.ParentAnalyzers,
-                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 200, tolerance: 0.0001);
+                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 20, tolerance: 0.0001);
             for (currentTimeStep = 0; currentTimeStep < totalTime / timeStep; currentTimeStep++)
             {
                 equationModel.CurrentTimeStep = currentTimeStep;

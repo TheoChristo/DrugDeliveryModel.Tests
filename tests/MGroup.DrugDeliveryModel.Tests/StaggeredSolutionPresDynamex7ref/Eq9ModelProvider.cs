@@ -20,18 +20,27 @@ using MGroup.MSolve.Numerics.Integration;
 using MGroup.LinearAlgebra.Matrices;
 using MGroup.Constitutive.ConvectionDiffusion.BoundaryConditions;
 using MGroup.Constitutive.ConvectionDiffusion;
+using MGroup.Solvers.AlgebraicModel;
+using MGroup.MSolve.Numerics.Interpolation;
+using MGroup.MSolve.Numerics.Integration.Quadratures;
+using MGroup.MSolve.Solution.LinearSystem;
+using TriangleNet.Tools;
+using MGroup.MSolve.Numerics.Interpolation.Jacobians;
 
 namespace MGroup.DrugDeliveryModel.Tests.EquationModels
 {
 	public class Eq9ModelProvider
     {
+        private GlobalAlgebraicModel<SkylineMatrix> algebraicModel;
+        private IParentAnalyzer analyzer;
+
         //TODO Orestis :if AddLoads9BCs() is implemented in a right way these will not be necessary and be deleted.
         //TODO Orestis :if AddLoads9BCs() is implemented in a right way these will not be necessary and be deleted.
         //TODO Orestis :if AddEquation9BCs() is implemented in a right way these will not be necessary and be deleted.
         // Model Min,Max(X,Y,Z) Deleted and removed from constructor
         // load_value is deleted and removed from constructor
         // loadedDof is deleted and removed from constructor
-        
+
         //private double sc = 0.1;
         private double miNormal;// = 5;//KPa
         private double kappaNormal;// = 6.667; //Kpa
@@ -153,7 +162,7 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
         public (IParentAnalyzer analyzer, ISolver solver, IChildAnalyzer loadcontrolAnalyzer) GetAppropriateSolverAnalyzerAndLog(Model model, double pseudoTimeStep, double pseudoTotalTime, int currentStep, int nIncrements)
         {
             var solverFactory = new SkylineSolver.Factory() { FactorizationPivotTolerance = 1e-8 };
-            var algebraicModel =  solverFactory.BuildAlgebraicModel(model);
+            algebraicModel =  solverFactory.BuildAlgebraicModel(model);
             var solver = solverFactory.BuildSolver(algebraicModel);
             var provider = new ProblemStructural(model, algebraicModel);
             var loadControlAnalyzerBuilder = new LoadControlAnalyzer.Builder(algebraicModel, solver, provider, numIncrements: nIncrements)
@@ -176,7 +185,7 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             var analyzerBuilder = new NewmarkDynamicAnalyzer.Builder(algebraicModel, provider, loadControlAnalyzer, timeStep: pseudoTimeStep, totalTime: pseudoTotalTime,false, currentStep: currentStep);
             analyzerBuilder.SetNewmarkParametersForConstantAcceleration();
             //var analyzerBuilder = new BDFDynamicAnalyzer.Builder(algebraicModel, provider, loadControlAnalyzer, timeStep: pseudoTimeStep, totalTime: pseudoTotalTime, currentTimeStep: currentStep, bdfOrder: 5);
-            var analyzer = analyzerBuilder.Build();
+            analyzer = analyzerBuilder.Build();
 
 
             //Sparse tet Mesh
@@ -204,6 +213,209 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             }
 
             elementSavedDisplacementsIsInitialized = true;
+        }
+
+        public Dictionary<int, double[][]> GetVelocities()
+        {
+            var nodalDofs = new StructuralDof[] { StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ };
+            var modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
+            modelVelocities.CheckForCompatibility=false;
+
+
+            var interpolation = InterpolationTet4.UniqueInstance;
+            var quadrature = TetrahedronQuadrature.Order1Point1;
+            
+            int nGaussPoints = 1;
+            var velcocities = new Dictionary<int, double[][]>();
+
+            foreach (var elem in reader.ElementConnectivity)
+            {
+                var nodes = elem.Value.Item2;
+                var nodalVelocities = new double[3 * nodes.Count()];
+                
+
+                for (int i = 0; i < nodes.Length; i++)
+                {
+                    for (int i1 = 0; i1 < 3; i1++)
+                    {
+                        var dof = nodalDofs[i1];
+                        double dofVelocity = 0;
+                        try
+                        {
+                            dofVelocity = algebraicModel.ExtractSingleValue(modelVelocities, nodes[i], dof);
+                        }
+                        catch (KeyNotFoundException e)
+                        {
+                            // recover from exception
+                        }
+
+                        nodalVelocities[3*i+i1]= dofVelocity;
+                    }
+                }
+
+
+                var velocity = new double[nGaussPoints][];
+
+                int gausspoinNo = 0; // anti gia loop to ntegation.Gausspoint1
+                var shapeFunctionValues = interpolation.EvaluateFunctionsAt(quadrature.IntegrationPoints[gausspoinNo]);
+
+
+                velocity[0]= new double[] {0,0,0};
+
+                for (int i1 = 0; i1 < shapeFunctionValues.Length; i1++)
+                {
+                    velocity[0][0] += shapeFunctionValues[i1] * nodalVelocities[3 * i1 + 0];
+                    velocity[0][1] += shapeFunctionValues[i1] * nodalVelocities[3 * i1 + 1];
+                    velocity[0][2] += shapeFunctionValues[i1] * nodalVelocities[3 * i1 + 2];
+
+                }
+
+                velcocities[elem.Key] = velocity;
+
+
+                    
+            }
+
+            modelVelocities.CheckForCompatibility = false;
+            return velcocities;
+        }
+
+        public Dictionary<int, double[][]> GetVelocities2()
+        {
+            var nodalDofs = new StructuralDof[] { StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ };
+            var modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
+            modelVelocities.CheckForCompatibility = false;
+            var velocityNodalResults = algebraicModel.ExtractAllResults(modelVelocities);
+            var velocityNodalData = velocityNodalResults.Data;
+
+            var interpolation = InterpolationTet4.UniqueInstance;
+            var quadrature = TetrahedronQuadrature.Order1Point1;
+
+            int nGaussPoints = 1;
+            var velcocities = new Dictionary<int, double[][]>();
+
+            foreach (var elem in reader.ElementConnectivity)
+            {
+                var nodes = elem.Value.Item2;
+                var nodalVelocities = new double[3 * nodes.Count()];
+
+
+                for (int i = 0; i < nodes.Length; i++)
+                {
+                    for (int i1 = 0; i1 < 3; i1++)
+                    {
+                        var dof = nodalDofs[i1];
+                        double dofVelocity = 0;
+
+                        bool foundVelocity = velocityNodalData.TryGetValue(nodes[i].ID, i1, out double velocityVal);
+                        if (foundVelocity) { dofVelocity= velocityVal; }
+
+
+                        nodalVelocities[3 * i + i1] = dofVelocity;
+                    }
+                }
+
+
+                var velocity = new double[nGaussPoints][];
+
+                int gausspoinNo = 0; // anti gia loop to ntegation.Gausspoint1
+                var shapeFunctionValues = interpolation.EvaluateFunctionsAt(quadrature.IntegrationPoints[gausspoinNo]);
+
+
+                velocity[gausspoinNo] = new double[] { 0, 0, 0 };
+
+                for (int i1 = 0; i1 < shapeFunctionValues.Length; i1++)
+                {
+                    velocity[gausspoinNo][0] += shapeFunctionValues[i1] * nodalVelocities[3 * i1 + 0];
+                    velocity[gausspoinNo][1] += shapeFunctionValues[i1] * nodalVelocities[3 * i1 + 1];
+                    velocity[gausspoinNo][2] += shapeFunctionValues[i1] * nodalVelocities[3 * i1 + 2];
+
+                }
+
+                velcocities[elem.Key] = velocity;
+
+
+
+            }
+
+            modelVelocities.CheckForCompatibility = false;
+            return velcocities;
+        }
+
+        public Dictionary<int, double[]> GetVelocityDIV()
+        {
+            var nodalDofs = new StructuralDof[] { StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ };
+            var modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
+            modelVelocities.CheckForCompatibility = false;
+            var velocityNodalResults = algebraicModel.ExtractAllResults(modelVelocities);
+            var velocityNodalData = velocityNodalResults.Data;
+
+            var interpolation = InterpolationTet4.UniqueInstance;
+            var quadrature = TetrahedronQuadrature.Order1Point1;
+
+            int nGaussPoints = 1;
+            var velcocities = new Dictionary<int, double[]>();
+
+            foreach (var elem in reader.ElementConnectivity)
+            {
+                var nodes = elem.Value.Item2;
+                var nodalVelocities = new double[3 * nodes.Count()];
+
+
+                for (int i = 0; i < nodes.Length; i++)
+                {
+                    for (int i1 = 0; i1 < 3; i1++)
+                    {
+                        var dof = nodalDofs[i1];
+                        double dofVelocity = 0;
+
+                        bool foundVelocity = velocityNodalData.TryGetValue(nodes[i].ID, i1, out double velocityVal);
+                        if (foundVelocity) { dofVelocity = velocityVal; }
+
+
+                        nodalVelocities[3 * i + i1] = dofVelocity;
+                    }
+                }
+
+
+                var velocityDiv = new double[nGaussPoints];
+
+                int gausspoinNo = 0; // anti gia loop to ntegation.Gausspoint1
+                //IReadOnlyList<Matrix> shapeFunctionNaturalDerivatives;
+                var shapeFunctionNaturalDerivatives = interpolation.EvaluateNaturalGradientsAt(quadrature.IntegrationPoints[gausspoinNo]);
+                var jacobian = new IsoparametricJacobian3D(nodes, shapeFunctionNaturalDerivatives);
+                var jacobianInverse = jacobian.InverseMatrix.Transpose();
+
+
+                double[,] dvi_dnaturalj = new double[3, 3]; //{ dphi_dksi, dphi_dheta, dphi_dzeta}
+                for (int i1 = 0; i1 < shapeFunctionNaturalDerivatives.NumRows; i1++)
+                {
+                    dvi_dnaturalj[0, 0] += shapeFunctionNaturalDerivatives[i1, 0] * nodalVelocities[3 * i1 + 0];
+                    dvi_dnaturalj[0, 1] += shapeFunctionNaturalDerivatives[i1, 1] * nodalVelocities[3 * i1 + 0];
+                    dvi_dnaturalj[0, 2] += shapeFunctionNaturalDerivatives[i1, 2] * nodalVelocities[3 * i1 + 0];
+                                                                                    
+                    dvi_dnaturalj[1, 0] += shapeFunctionNaturalDerivatives[i1, 0] * nodalVelocities[3 * i1 + 1];
+                    dvi_dnaturalj[1, 1] += shapeFunctionNaturalDerivatives[i1, 1] * nodalVelocities[3 * i1 + 1];
+                    dvi_dnaturalj[1, 2] += shapeFunctionNaturalDerivatives[i1, 2] * nodalVelocities[3 * i1 + 1];
+                                                                                    
+                    dvi_dnaturalj[2, 0] += shapeFunctionNaturalDerivatives[i1, 0] * nodalVelocities[3 * i1 + 2];
+                    dvi_dnaturalj[2, 1] += shapeFunctionNaturalDerivatives[i1, 1] * nodalVelocities[3 * i1 + 2];
+                    dvi_dnaturalj[2, 2] += shapeFunctionNaturalDerivatives[i1, 2] * nodalVelocities[3 * i1 + 2];
+                }
+
+                var dvi_dnaturaljMAT = Matrix.CreateFromArray(dvi_dnaturalj);
+
+                var dvi_dcartesianj = dvi_dnaturaljMAT * jacobianInverse.Transpose();
+                velocityDiv[gausspoinNo] = dvi_dcartesianj[0, 0] + dvi_dcartesianj[1, 1] + dvi_dcartesianj[2, 2];
+
+                velcocities[elem.Key] = velocityDiv;
+
+
+
+            }
+
+            modelVelocities.CheckForCompatibility = false;
+            return velcocities;
         }
     }
 }
