@@ -59,7 +59,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// <summary>
         /// Initial Oxygen Concentration [mol/m3]
         /// </summary>
-        private readonly double CInitOx; // [mol/m3]
+        //private readonly double CInitOx; // [mol/m3]
 
         /// <summary>
         /// Cancer cell density [1]
@@ -70,10 +70,10 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// Term without non-linear term
         /// </summary>
         private readonly Func<double> independentLinearSource;
-        
+
         private readonly Func<double> dependentLinearSource;
 
-        
+
         private readonly ComsolMeshReader mesh;
 
         /// <summary>
@@ -109,11 +109,11 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
 
         public CoxVanillaSourceModelBuilder(ComsolMeshReader modelReader,
-            Dictionary<int, double[]> FluidSpeed, double Dox, double Aox, double Kox, double PerOx, double Sv, double CInitOx, Dictionary<int, double> T, double initialCondition,
-            Func<double> independentLinearSource, Func<double> dependentLinearSource,
+            Dictionary<int, double[]> FluidSpeed, Func<double> independentLinearSource, Func<double> dependentLinearSource,
+            double Dox, double Aox, double Kox, double PerOx, double Sv,  double initialCondition,
             int nodeIdToMonitor, ConvectionDiffusionDof dofTypeToMonitor,
             List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])> convectionDiffusionDirichletBC,
-            List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])> convectionDiffusionNeumannBC )
+            List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])> convectionDiffusionNeumannBC)
         {
             this.mesh = modelReader;
             this.FluidSpeed = FluidSpeed;
@@ -122,8 +122,6 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             this.Kox = Kox;
             this.PerOx = PerOx;
             this.Sv = Sv;
-            this.CInitOx = CInitOx;
-            this.T = T;
             this.initialCondition = initialCondition;
 
             this.independentLinearSource = independentLinearSource;
@@ -148,7 +146,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             var capacity = 1;
             var diffusionCoefficient = Dox;
             var independentSourceCoefficient = independentLinearSource();
-            var dependentSourceCoefficient = 0;
+            var dependentSourceCoefficient = dependentLinearSource();
 
             //Assign equation properties to the domain elements
             var convectionDomainCoefficients = new Dictionary<int, double[]>();
@@ -187,7 +185,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
             var analyzerBuilder = new NewmarkDynamicAnalyzer.Builder(algebraicModel, problem, linearAnalyzer, timeStep: TimeStep, totalTime: TotalTime, true, currentStep: currentStep);
             analyzerBuilder.SetNewmarkParametersForConstantAcceleration();
-            
+
             var analyzer = analyzerBuilder.Build();
             var watchDofs = new[]
             {
@@ -196,6 +194,33 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                     (model.NodesDictionary[nodeIdToMonitor], dofTypeToMonitor),
                 }
             };
+            linearAnalyzer.LogFactory = new LinearAnalyzerLogFactory(watchDofs[0], algebraicModel);
+
+            return (analyzer, solver, linearAnalyzer);
+        }
+
+        public (IParentAnalyzer analyzer, ISolver solver, IChildAnalyzer loadcontrolAnalyzer) GetAppropriateSolverAnalyzerAndLog
+        (Model model, double pseudoTimeStep, double pseudoTotalTime, int currentStep)
+        {
+            var solverFactory = new DenseMatrixSolver.Factory() { IsMatrixPositiveDefinite = false }; //Dense Matrix Solver solves with zero matrices!
+                                                                                                      //var solverFactory = new SkylineSolver.Factory() { FactorizationPivotTolerance = 1e-8 };
+            var algebraicModel = solverFactory.BuildAlgebraicModel(model);
+            var solver = solverFactory.BuildSolver(algebraicModel);
+            var provider = new ProblemConvectionDiffusion(model, algebraicModel);
+
+
+            var linearAnalyzer = new LinearAnalyzer(algebraicModel, solver, provider);
+
+            var analyzerBuilder = new NewmarkDynamicAnalyzer.Builder(algebraicModel, provider, linearAnalyzer, timeStep: pseudoTimeStep, totalTime: pseudoTotalTime, false, currentStep: currentStep);
+            analyzerBuilder.SetNewmarkParametersForConstantAcceleration();
+            var analyzer = analyzerBuilder.Build();
+            var watchDofs = new[]
+            {
+                    new List<(INode node, IDofType dof)>()
+                    {
+                        (model.NodesDictionary[nodeIdToMonitor], dofTypeToMonitor),
+                    }
+                };
             linearAnalyzer.LogFactory = new LinearAnalyzerLogFactory(watchDofs[0], algebraicModel);
 
             return (analyzer, solver, linearAnalyzer);

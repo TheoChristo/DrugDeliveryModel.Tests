@@ -246,8 +246,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// <summary>
         /// Initial Oxygen Concentration [mol/m3]
         /// </summary>
-        private const double CInitOx = 0.2; // [mol/m3]
+        private const double CInitialOx = 0d; // [mol/m3]
 
+        private const double CInitOx =0.2; // [mol/m3]
         /// <summary>
         /// Cancer cell density [1]
         /// </summary>
@@ -422,15 +423,16 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 structuralMonitorID, eq9dofTypeToMonitor, structuralNeumannBC, structuralDirichletBC);
 
             //Create Model For Oxygen
-            var coxModel = new CoxVanillaSourceModelBuilder(comsolReader, FluidSpeed, Dox, Aox, Kox, PerOx, SvCox, CInitOx, T, 0d, 
-                                            independentLinearSource, dependentLinearSource,
+            var coxModel = new CoxVanillaSourceModelBuilder(comsolReader, FluidSpeed, independentLinearSource, dependentLinearSource, Dox, Aox, Kox, PerOx, SvCox, CInitialOx, 
+                                            
                                             coxMonitorID, coxMonitorDOF, convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
+           
 
             //COMMITED BY NACHO 
             //jkkk bn///////vji typ[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[00u-----------------------------------
 
             var equationModel = new Coupled78_9_13_VanillaSourceModel(eq78Model, coxModel, eq9Model , comsolReader, lambda, pressureTensorDivergenceAtElementGaussPoints, velocityDivergenceAtElementGaussPoints, FluidSpeed, k_th_tumor, timeStep,
-                totalTime, 200);
+                totalTime, incrementsPertimeStep);
             
             var staggeredAnalyzer = new StepwiseStaggeredAnalyzer(equationModel.ParentAnalyzers, equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 200, tolerance:1E-5);                                                       
             for (currentTimeStep = 0; currentTimeStep < totalTime / timeStep; currentTimeStep++)
