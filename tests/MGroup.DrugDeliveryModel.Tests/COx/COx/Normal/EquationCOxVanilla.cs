@@ -1,3 +1,4 @@
+using BC = MGroup.DrugDeliveryModel.Tests.Commons.BoundaryAndInitialConditionsUtility.BoundaryConditionCase;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,7 +90,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
 
         //---------------------------------------Time Discretization Specs------------------------------
-        private const double TotalTime = 1E-3;
+        private const double TotalTime = 20E-5;
 
         /// <summary>
         /// For increased accuracy use time-step of order 1E-5
@@ -127,12 +128,19 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 //DomainDependentSource.Add(element.Key, DependentLinearSource());
                 //DomainIndependentSource.Add(element.Key, IndependentLinearSource());
             }
-            
-            var convectionDiffusionDirichletBC = new List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])>()
+
+            //var convectionDiffusionDirichletBC = new List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])>()
+            //{
+            //    (BoundaryAndInitialConditionsUtility.BoundaryConditionCase.TopDirichlet, new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[1][]{new double[3] {0.1, 0.1, 0.1}}, new double[] {0.2}),
+            //    (BoundaryAndInitialConditionsUtility.BoundaryConditionCase.RightDirichlet,new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[1][]{new double[3] {0.1, 0.1, 0.1}}, new double[] {0.2}),
+            //    (BoundaryAndInitialConditionsUtility.BoundaryConditionCase.BackDirichlet, new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[1][]{new double[3] {0.1, 0.1, 0.1}}, new double[] {0.2}),
+            //};
+            var convectionDiffusionDirichletBC =
+            new List<(BC, ConvectionDiffusionDof[], double[][], double[])>()
             {
-                (BoundaryAndInitialConditionsUtility.BoundaryConditionCase.TopDirichlet, new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[1][]{new double[3] {0.1, 0.1, 0.1}}, new double[] {0.2}),
-                (BoundaryAndInitialConditionsUtility.BoundaryConditionCase.RightDirichlet,new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[1][]{new double[3] {0.1, 0.1, 0.1}}, new double[] {0.2}),
-                (BoundaryAndInitialConditionsUtility.BoundaryConditionCase.BackDirichlet, new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[1][]{new double[3] {0.1, 0.1, 0.1}}, new double[] {0.2}),
+                (BC.TopRightBackDiriclet, new ConvectionDiffusionDof[] { ConvectionDiffusionDof.UnknownVariable }, new double[2][]{new double[3] {0,0,0},new double[3] {0.1,0.1,0.1}}, new double[]{0.2}),
+
+
             };
             var convectionDiffusionNeumannBC = new List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])>();
 
