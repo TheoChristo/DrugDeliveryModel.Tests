@@ -34,7 +34,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         const double Sc = 0.1;
 
         private const double timeStep = 1E-5; // in sec
-        const double totalTime = 3E-4; // in sec
+        const double totalTime = 20E-5; // in sec
         static int incrementsPertimeStep = 1;
         static int currentTimeStep = 0;
 
@@ -112,10 +112,10 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {(new double[]{ 0.05301208792514899, 0.053825572057669926, 0.052065045951539365 }, "CenterNodeGradients",-1, new double[3][])};
 
         //10 step  u - P coupling
-        //static double[] monitoredGPCoordsVelocity = new double[] { 0.09, 0.09, 0.09 };
+        static double[] monitoredGPCoordsVelocity = new double[] { 0.09, 0.09, 0.09 };
         
         //30 step - fluid velocity test
-        static double[] monitoredGPCoordsVelocity = new double[] { 0.08, 0.08, 0.08 };
+        //static double[] monitoredGPCoordsVelocity = new double[] { 0.08, 0.08, 0.08 };
 
         #endregion
 
@@ -187,7 +187,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {(new double[]{ 0.04930793848882013,0.04994681648346263,0.075 }, "CornerNodeTranslationZ.txt",StructuralDof.TranslationZ,-1, new double[0])};
         
         //10 step  u - P coupling
-        static double[] pressureMonitorNodeCoords = new double[] { 0.055, 0.0559, 0.05 };
+        static double[] pressureMonitorNodeCoords = new double[] { 0.050, 0.050, 0.05 };
         
         private static int pressureMonitorID;
         
@@ -206,10 +206,10 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         //static double[] monitoredGPcoordsPresGradient = new double[] { 0.055, 0.0559, 0.05 };
         
         //30 step - fluid velocity test
-        static double[] monitoredGPcoordsPresGradient = new double[] { 0.08, 0.08, 0.08 };
+        static double[] monitoredGPcoordsPresGradient = new double[] { 0.09, 0.09, 0.09 };
         
         //30 step - fluid velocity test
-        static double[] monitoredGPcoordsFluidVelocity = new double[] { 0.08, 0.08, 0.08 };
+        static double[] monitoredGPcoordsFluidVelocity = new double[] {0.09, 0.09, 0.09 };
         static int fluidVelocityMonitorID;
 
         #endregion
@@ -222,7 +222,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private Dictionary<int, double[]> FluidSpeed = new Dictionary<int, double[]>(); // 2.32E-4 [m/s]
         const double FluidSpeedInit = 0;//2.32E-4;
 
-        static double SvCox = 7E3; // 1 / m
+        static double SvC = 7E3; // 1 / m
         /// <summary>
         /// Diffusivity of oxygen [m2/s]
         /// </summary>
@@ -246,9 +246,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// <summary>
         /// Initial Oxygen Concentration [mol/m3]
         /// </summary>
-        private const double CInitialOx = 0d; // [mol/m3]
+        private const double CoxInitial = 0d; // [mol/m3]
 
-        private const double CInitOx =0.2; // [mol/m3]
+        private const double Ciox =0.2; // [mol/m3]
         /// <summary>
         /// Cancer cell density [1]
         /// </summary>
@@ -270,9 +270,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private static int vfMonitorGpID;
         private List<double[]> vf_calculated = new List<double[]>();
 
-        private readonly Func<double> independentLinearSource = () => PerOx * SvCox * CInitOx;
+        private readonly Func<double> independentLinearSource = () => PerOx * SvC * Ciox;
         
-        private readonly Func<double> dependentLinearSource = () => -PerOx * SvCox;
+        private readonly Func<double> dependentLinearSource = () => -PerOx * SvC;
         
 
         #endregion
@@ -423,7 +423,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 structuralMonitorID, eq9dofTypeToMonitor, structuralNeumannBC, structuralDirichletBC);
 
             //Create Model For Oxygen
-            var coxModel = new CoxVanillaSourceModelBuilder(comsolReader, FluidSpeed, independentLinearSource, dependentLinearSource, Dox, Aox, Kox, PerOx, SvCox, CInitialOx, 
+            var coxModel = new CoxVanillaSourceModelBuilder(comsolReader, FluidSpeed, independentLinearSource, dependentLinearSource, Dox, Aox, Kox, PerOx, SvC, CoxInitial, 
                                             
                                             coxMonitorID, coxMonitorDOF, convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
            
@@ -444,7 +444,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 #region logging
                 
                 //TODO Orestis: implement here one for loop for each "node Type" requested  log using the following commands
-                monitoredGPVelocity_elemID = Utilities.FindElementIdFromGaussPointCoordinates(equationModel.model[0], monitoredGPcoordsFluidVelocity, 1e-1); //Todo Orestis delete these commands1
+                monitoredGPVelocity_elemID = Utilities.FindElementIdFromGaussPointCoordinates(equationModel.model[0], monitoredGPCoordsVelocity, 1e-1); //Todo Orestis delete these commands1
                 monitoredGPpressureGrad_elemID = Utilities.FindElementIdFromGaussPointCoordinates(equationModel.model[0], monitoredGPcoordsPresGradient, 1e-1);
                 vfMonitorGpID = Utilities.FindElementIdFromGaussPointCoordinates(equationModel.model[2], vfMonitorGpCoords, 1e-1);
 

@@ -246,8 +246,12 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// <summary>
         /// Initial Oxygen Concentration [mol/m3]
         /// </summary>
-        private const double CInitOx = 0.2; // [mol/m3]
-
+        private const double CoxInitialCondition =0d; // [mol/m3]
+        
+        /// <summary>
+        /// Initial Oxygen Concentration [mol/m3]
+        /// </summary>
+        private const double CiOx = 0.2; // [mol/m3]
         /// <summary>
         /// Cancer cell density [1]
         /// </summary>
@@ -269,7 +273,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private static int vfMonitorGpID;
         private List<double[]> vf_calculated = new List<double[]>();
 
-        private readonly Func<double> independentLinearSource = () => PerOx * SvCox * CInitOx;
+        private readonly Func<double> independentLinearSource = () => PerOx * SvCox * CiOx;
 
         private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTerm = new Dictionary<int, Func<double, double>>();
         public Func<double, double> getProductionFuncWithoutConstantTerm(int i)
@@ -435,7 +439,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 structuralMonitorID, eq9dofTypeToMonitor, structuralNeumannBC, structuralDirichletBC);
 
             //Create Model For Oxygen
-            var coxModel = new CoxModelBuilder(comsolReader, FluidSpeed, Dox, Aox, Kox, PerOx, SvCox, CInitOx, T, 0d, 
+            var coxModel = new CoxModelBuilder(comsolReader, FluidSpeed, Dox, Aox, Kox, PerOx, SvCox, CiOx, T, CoxInitialCondition, 
                                             independentLinearSource, ProductionFuncsWithoutConstantTerm, ProductionFuncsWithoutConstantTermDerivative,
                                             coxMonitorID, coxMonitorDOF, convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
 

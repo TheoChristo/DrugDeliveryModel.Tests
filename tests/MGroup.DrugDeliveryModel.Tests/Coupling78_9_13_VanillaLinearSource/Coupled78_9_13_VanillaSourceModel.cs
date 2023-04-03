@@ -120,9 +120,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             {//CALCULATE vf = kP + vs
                 FluidSpeed[elem.Key] = new double[3]
                 {
-                    (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][0] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][0]) * 1000,
-                    (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][1] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][1]) * 1000,
-                    (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][2] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][2]) * 1000,
+                    (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][0] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][0]) * 10,
+                    (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][1] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][1]) * 10,
+                    (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][2] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][2]) * 10,
                 };
             }
             model = new Model[3];
@@ -174,9 +174,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                  //vs
                      FluidSpeed[elem.Key] = new double[3]
                      {
-                         (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][0] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][0]) * 1000,
-                         (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][1] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][1]) * 1000,
-                         (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][2] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][2]) * 1000,
+                         (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][0] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][0]) * 10,
+                         (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][1] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][1]) * 10,
+                         (-(pressureTensorDivergenceAtElementGaussPoints[elem.Key][0][2] * kth) + ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][2]) * 10,
                      };
                 }
             }

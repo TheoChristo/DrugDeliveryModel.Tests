@@ -137,7 +137,6 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             this.convectionDiffusionDirichletBC = convectionDiffusionDirichletBC;
             this.convectionDiffusionNeumannBC = convectionDiffusionNeumannBC;
 
-            this.initialCondition = initialCondition;
 
             //log
             this.nodeIdToMonitor = nodeIdToMonitor;
