@@ -34,7 +34,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         const double Sc = 0.1;
 
         private const double timeStep = 1E-5; // in sec
-        const double totalTime = 3E-4; // in sec
+        const double totalTime = 10E-5; // in sec
         static int incrementsPertimeStep = 1;
         static int currentTimeStep = 0;
 
@@ -220,7 +220,8 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// The average value of the three components of the fluid velocity vector  [m/s]
         /// </summary>
         private Dictionary<int, double[]> FluidSpeed = new Dictionary<int, double[]>(); // 2.32E-4 [m/s]
-        const double FluidSpeedInit = 0;//2.32E-4;
+        const double FluidSpeedInit =-2.32E-4;
+        static double SvC = 7E3; // 1 / m
 
         static double SvCox = 7E3; // 1 / m
         /// <summary>
@@ -274,6 +275,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private List<double[]> vf_calculated = new List<double[]>();
 
         private readonly Func<double> independentLinearSource = () => PerOx * SvCox * CiOx;
+        private readonly Func<double> dependentLinearSource = null;// () => -PerOx * SvC;
 
         private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTerm = new Dictionary<int, Func<double, double>>();
         public Func<double, double> getProductionFuncWithoutConstantTerm(int i)
@@ -335,8 +337,11 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 //Cox Init
                 FluidSpeed.Add(elem.Key, new double[] { FluidSpeedInit, FluidSpeedInit, FluidSpeedInit });
                 T.Add(elem.Key, TInit);
-                ProductionFuncsWithoutConstantTerm.Add(elem.Key, getProductionFuncWithoutConstantTerm(elem.Key));
-                ProductionFuncsWithoutConstantTermDerivative.Add(elem.Key, getProductionFuncWithoutConstantTermDerivative(elem.Key));
+                if(dependentLinearSource == null)
+                {
+                    ProductionFuncsWithoutConstantTerm.Add(elem.Key, getProductionFuncWithoutConstantTerm(elem.Key));
+                    ProductionFuncsWithoutConstantTermDerivative.Add(elem.Key, getProductionFuncWithoutConstantTermDerivative(elem.Key));
+                }
             }
 
             Dictionary<int, double[][]> pressureTensorDivergenceAtElementGaussPoints =
@@ -439,8 +444,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 structuralMonitorID, eq9dofTypeToMonitor, structuralNeumannBC, structuralDirichletBC);
 
             //Create Model For Oxygen
-            var coxModel = new CoxModelBuilder(comsolReader, FluidSpeed, Dox, Aox, Kox, PerOx, SvCox, CiOx, T, CoxInitialCondition, 
-                                            independentLinearSource, ProductionFuncsWithoutConstantTerm, ProductionFuncsWithoutConstantTermDerivative,
+            var coxModel = new CoxModelBuilder(comsolReader, FluidSpeed,
+                                            Dox, Aox, Kox, PerOx, SvCox, CiOx, T, CoxInitialCondition, 
+                                            independentLinearSource, dependentLinearSource, ProductionFuncsWithoutConstantTerm, ProductionFuncsWithoutConstantTermDerivative,
                                             coxMonitorID, coxMonitorDOF, convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
 
             //COMMITED BY NACHO 

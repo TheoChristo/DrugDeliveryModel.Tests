@@ -72,7 +72,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// Rhs [mol/m3]
         /// </summary>
         private const double CiOx = 0.2; // [mol/m3]
-
+        const double TInit = 500;
         /// <summary>
         /// Cancer cell density [1]
         /// </summary>
@@ -102,9 +102,23 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// Simplified version of the independent production term without non-linear term
         /// </summary>
         public Func<double> IndependentLinearSource = () => PerOx * Sv * CiOx;
-        
-        public Func<double> DependentLinearSource => () => -PerOx * Sv;
-        
+
+        public Func<double> DependentLinearSource => null;// () => -PerOx * Sv;
+
+        private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTerm = new Dictionary<int, Func<double, double>>();
+        public Func<double, double> getProductionFuncWithoutConstantTerm(int i)
+        {
+            return (double Cox) => -PerOx * Sv * Cox - Aox * T[i] * Cox / (Cox + Kox);
+            //return (double Cox) => -PerOx * Sv * Cox; //Linear
+        }
+
+        private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTermDerivative = new Dictionary<int, Func<double, double>>();
+        public Func<double, double> getProductionFuncWithoutConstantTermDerivative(int i)
+        {
+            return (double Cox) => -PerOx * Sv - Aox * T[i] / (Cox + Kox) + Aox * T[i] * Cox * Math.Pow(Cox + Kox, -2);
+            //return (double Cox) => -PerOx * Sv; //Linear
+        }
+
         static double[] expectedLinSolution = new double[]
             {0.00027617099601129385,
              0.00082795347593641352,
@@ -141,13 +155,19 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {
             var mesh = new ComsolMeshReader(fileName);
 
-            var ind = DependentLinearSource();
-            var dep = IndependentLinearSource();
+/*            var ind = DependentLinearSource();
+            var dep = IndependentLinearSource();*/
             foreach (var element in mesh.ElementConnectivity)
             {
                 DomainFluidVelocity.Add(element.Key, new double[] { FluidInit, FluidInit, FluidInit });
                 //DomainDependentSource.Add(element.Key, DependentLinearSource());
                 //DomainIndependentSource.Add(element.Key, IndependentLinearSource());
+                if (DependentLinearSource == null)
+                {
+                    T.Add(element.Key, TInit);
+                    ProductionFuncsWithoutConstantTerm.Add(element.Key, getProductionFuncWithoutConstantTerm(element.Key));
+                    ProductionFuncsWithoutConstantTermDerivative.Add(element.Key, getProductionFuncWithoutConstantTermDerivative(element.Key));
+                }
             }
 
             //var convectionDiffusionDirichletBC = new List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])>()
@@ -167,14 +187,15 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
             var nodeIdToMonitor = Utilities.FindNodeIdFromNodalCoordinates(mesh.NodesDictionary, monitorNodeCoords, 1e-4);
 
-            var modelBuilder = new CoxVanillaSourceModelBuilder(mesh, DomainFluidVelocity, IndependentLinearSource, DependentLinearSource,
-                                                                Dox, Aox, Kox, PerOx, Sv, CInitialOx, 
-                                                                nodeIdToMonitor, coxMonitorDOF,
-                                                                convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
+            var modelBuilder = new CoxModelBuilder(mesh, DomainFluidVelocity,
+                                                    Dox, Aox, Kox, PerOx, Sv, CiOx, T, CInitialOx,
+                                                    IndependentLinearSource, DependentLinearSource, ProductionFuncsWithoutConstantTerm, ProductionFuncsWithoutConstantTermDerivative,
+                                                    nodeIdToMonitor, coxMonitorDOF,
+                                                    convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
             var model = modelBuilder.GetModel();
             modelBuilder.AddBoundaryConditions(model);
 
-            (var analyzer, var solver, var nlAnalyzers) = modelBuilder.GetAppropriateSolverAnalyzerAndLog(model, TimeStep, TotalTime, 0);
+            (var analyzer, var solver, var nlAnalyzers) = modelBuilder.GetAppropriateSolverAnalyzerAndLog(model, TimeStep, TotalTime, 0, 1);
 
             ((NewmarkDynamicAnalyzer)analyzer).ResultStorage = new ImplicitIntegrationAnalyzerLog();
 

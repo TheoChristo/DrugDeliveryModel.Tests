@@ -142,7 +142,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
             var nodeIdToMonitor = Utilities.FindNodeIdFromNodalCoordinates(mesh.NodesDictionary, monitorNodeCoords, 1e-4);
 
-            var modelBuilder = new CoxModelBuilder(mesh, FluidSpeed, Dox, Aox, Kox, PerOx, Sv, CiOx, T, CoxInitialCondition, independentLinearSource, ProductionFuncsWithoutConstantTerm, ProductionFuncsWithoutConstantTermDerivative, nodeIdToMonitor, coxMonitorDOF, convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
+            var modelBuilder = new CoxModelBuilder(mesh, FluidSpeed, Dox, Aox, Kox, PerOx, Sv, CiOx, T, CoxInitialCondition, independentLinearSource, null, ProductionFuncsWithoutConstantTerm, ProductionFuncsWithoutConstantTermDerivative, nodeIdToMonitor, coxMonitorDOF, convectionDiffusionDirichletBC, convectionDiffusionNeumannBC);
             var model = modelBuilder.GetModel();
             modelBuilder.AddBoundaryConditions(model);
 

@@ -21,6 +21,7 @@ using MGroup.MSolve.Solution;
 using MGroup.Constitutive.ConvectionDiffusion.BoundaryConditions;
 using MGroup.Constitutive.ConvectionDiffusion.InitialConditions;
 using System.Security.AccessControl;
+using BC = MGroup.DrugDeliveryModel.Tests.Commons.BoundaryAndInitialConditionsUtility.BoundaryConditionCase;
 
 namespace MGroup.DrugDeliveryModel.Tests.Integration
 {
@@ -70,6 +71,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// Term without non-linear term
         /// </summary>
         private readonly Func<double> independentLinearSource;
+        private readonly Func<double> dependentLinearSource; //Leave it null if you are going to use production functions
 
         private readonly Dictionary<int, Func<double, double>> ProductionFuncWithoutConstantTerm;
 
@@ -111,7 +113,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
         public CoxModelBuilder(ComsolMeshReader modelReader,
             Dictionary<int, double[]> FluidSpeed, double Dox, double Aox, double Kox, double PerOx, double Sv, double CInitOx, Dictionary<int, double> T, double initialCondition,
-            Func<double> independentLinearSource, Dictionary<int, Func<double, double>> ProductionFuncWithoutConstantTerm, Dictionary<int, Func<double, double>> ProductionFuncWithoutConstantTermDDerivative,
+            Func<double> independentLinearSource, Func<double> dependentLinearSource, Dictionary<int, Func<double, double>> ProductionFuncWithoutConstantTerm, Dictionary<int, Func<double, double>> ProductionFuncWithoutConstantTermDDerivative,
             int nodeIdToMonitor, ConvectionDiffusionDof dofTypeToMonitor,
             List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])> convectionDiffusionDirichletBC,
             List<(BoundaryAndInitialConditionsUtility.BoundaryConditionCase, ConvectionDiffusionDof[], double[][], double[])> convectionDiffusionNeumannBC )
@@ -128,6 +130,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             this.initialCondition = initialCondition;
 
             this.independentLinearSource = independentLinearSource;
+            this.dependentLinearSource = dependentLinearSource;
             this.ProductionFuncWithoutConstantTerm = ProductionFuncWithoutConstantTerm;
             this.ProductionFuncWithoutConstantTermDDerivative = ProductionFuncWithoutConstantTermDDerivative;
 
@@ -149,7 +152,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             var capacity = 1;
             var diffusionCoefficient = Dox;
             var independentSourceCoefficient = independentLinearSource();
-            var dependentSourceCoefficient = 0;
+            var dependentSourceCoefficient = dependentLinearSource == null ? 0 : dependentLinearSource(); 
 
             //Assign equation properties to the domain elements
             var convectionDomainCoefficients = new Dictionary<int, double[]>();
@@ -165,16 +168,170 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
             //Create Model
             var modelProvider = new GenericComsol3DConvectionDiffusionProductionModelProviderDistributedSpace(mesh);
-            var model = modelProvider.CreateModelFromComsolFile(convectionDomainCoefficients, diffusionCoefficient,
+            Model model;
+            if (dependentLinearSource == null)
+            {
+                model = modelProvider.CreateModelFromComsolFile(convectionDomainCoefficients, diffusionCoefficient,
                 dependentProductionCoefficients, independentProductionCoefficients, capacity,
                 ProductionFuncWithoutConstantTerm, ProductionFuncWithoutConstantTermDDerivative);
+            }
+            else
+            {
+                model = modelProvider.CreateModelFromComsolFile(convectionDomainCoefficients, diffusionCoefficient,
+                dependentProductionCoefficients, independentProductionCoefficients, capacity);
+            }
+
             return model;
         }
 
+        /*        public void AddBoundaryConditions(Model model)
+                {
+                    BoundaryAndInitialConditionsUtility.AssignConvectionDiffusionDirichletBCsToModel(model, convectionDiffusionDirichletBC, 1e-3);
+                    BoundaryAndInitialConditionsUtility.AssignConvectionDiffusionICToModel(model, initialCondition);
+                }*/
+
         public void AddBoundaryConditions(Model model)
         {
-            BoundaryAndInitialConditionsUtility.AssignConvectionDiffusionDirichletBCsToModel(model, convectionDiffusionDirichletBC, 1e-3);
-            BoundaryAndInitialConditionsUtility.AssignConvectionDiffusionICToModel(model, initialCondition);
+            foreach (var BCdata in convectionDiffusionDirichletBC)
+            {
+                var RegionType = BCdata.Item1;
+                var Bcstype = BCdata.Item2;
+                double[][] CaracteristicCoords = BCdata.Item3;
+                double[] prescrVal = BCdata.Item4;
+
+                switch (RegionType)
+                {
+                    case BC.TopRightBackDiriclet:
+                        {
+                            double modelMinX = CaracteristicCoords[0][0]; double modelMinY = CaracteristicCoords[0][1]; double modelMinZ = CaracteristicCoords[0][2];
+                            double modelMaxX = CaracteristicCoords[1][0]; double modelMaxY = CaracteristicCoords[1][1]; double modelMaxZ = CaracteristicCoords[1][2];
+                            AddTopRightBackNodesBC(model, prescrVal[0], modelMinX, modelMaxX, modelMinY, modelMaxY, modelMinZ, modelMaxZ);
+                            break;
+                        }
+                    case BC.LeftDirichlet or BC.RightDirichlet:
+                        {
+                            double xCoordin = CaracteristicCoords[0][0];
+                            AddXFaceBcs(model, xCoordin, prescrVal[0], ConvectionDiffusionDof.UnknownVariable);
+                            break;
+                        }
+                    case BC.FrontDirichlet or BC.BackDirichlet:
+                        {
+                            double yCoordin = CaracteristicCoords[0][1];
+                            AddYFaceBcs(model, yCoordin, prescrVal[0], ConvectionDiffusionDof.UnknownVariable);
+                            break;
+                        }
+                    case BC.TopDirichlet or BC.BottomDirichlet:
+                        {
+                            // TODO: pithanws to ConvectionDiffusionDof.UnknownVariable antikathistatai me duo periptwseis analoga to Bcstype
+                            double zCoordin = CaracteristicCoords[0][2];
+                            AddZFaceBcs(model, zCoordin, prescrVal[0], ConvectionDiffusionDof.UnknownVariable);
+                            break;
+                        }
+
+                }
+            }
+
+        }
+
+        public void AddXFaceBcs(Model model, double xCoordOfFace, double dirichleValue, ConvectionDiffusionDof dofTypeToPrescribeDircihle)
+        {
+
+            var xFaceNodes = new List<INode>();
+            foreach (var node in model.NodesDictionary.Values)
+            {
+                if (Math.Abs(xCoordOfFace - node.X) < 1E-9) xFaceNodes.Add(node);
+            }
+
+            var dirichletBCs = new List<NodalUnknownVariable>();
+            foreach (var node in xFaceNodes)
+            {
+                dirichletBCs.Add(new NodalUnknownVariable(node, dofTypeToPrescribeDircihle, dirichleValue));
+            }
+
+
+            model.BoundaryConditions.Add(new ConvectionDiffusionBoundaryConditionSet(
+                dirichletBCs,
+                new INodalConvectionDiffusionNeumannBoundaryCondition[] { }
+            ));
+
+        }
+
+        public void AddYFaceBcs(Model model, double yCoordOfFace, double dirichleValue, ConvectionDiffusionDof dofTypeToPrescribeDircihle)
+        {
+
+            var yFaceNodes = new List<INode>();
+            foreach (var node in model.NodesDictionary.Values)
+            {
+                if (Math.Abs(yCoordOfFace - node.Y) < 1E-9) yFaceNodes.Add(node);
+            }
+
+            var dirichletBCs = new List<NodalUnknownVariable>();
+            foreach (var node in yFaceNodes)
+            {
+                dirichletBCs.Add(new NodalUnknownVariable(node, dofTypeToPrescribeDircihle, dirichleValue));
+            }
+
+
+            model.BoundaryConditions.Add(new ConvectionDiffusionBoundaryConditionSet(
+                dirichletBCs,
+                new INodalConvectionDiffusionNeumannBoundaryCondition[] { }
+            ));
+
+        }
+
+
+        public void AddZFaceBcs(Model model, double zCoordOfFace, double dirichleValue, ConvectionDiffusionDof dofTypeToPrescribeDircihle)
+        {
+
+            var zFaceNodes = new List<INode>();
+            foreach (var node in model.NodesDictionary.Values)
+            {
+                if (Math.Abs(zCoordOfFace - node.Z) < 1E-9) zFaceNodes.Add(node);
+            }
+
+            var dirichletBCs = new List<NodalUnknownVariable>();
+            foreach (var node in zFaceNodes)
+            {
+                dirichletBCs.Add(new NodalUnknownVariable(node, dofTypeToPrescribeDircihle, dirichleValue));
+            }
+
+
+            model.BoundaryConditions.Add(new ConvectionDiffusionBoundaryConditionSet(
+                dirichletBCs,
+                new INodalConvectionDiffusionNeumannBoundaryCondition[] { }
+            ));
+
+        }
+
+        private void AddTopRightBackNodesBC(Model model, double boundaryCondition,
+                                                            double modelMinX, double modelMaxX,
+                                                            double modelMinY, double modelMaxY,
+                                                            double modelMinZ, double modelMaxZ)
+        {
+            var topNodes = new List<INode>();
+            var rightNodes = new List<INode>();
+            var backNodes = new List<INode>();
+
+            var tol = 1E-5;
+
+            foreach (var node in model.NodesDictionary.Values)
+            {
+                if (Math.Abs(modelMaxZ - node.Z) < tol) topNodes.Add(node);
+                if (Math.Abs(modelMaxX - node.X) < tol) rightNodes.Add(node);
+                if (Math.Abs(modelMaxY - node.Y) < tol) backNodes.Add(node);
+            }
+            //Union of all boundary nodes in a single enumerable.
+            var peripheralNodes = topNodes.Union(backNodes).Union(rightNodes);
+
+            var dirichletBCs = new List<NodalUnknownVariable>();
+
+            //Add the prescribed value to all boundary nodes
+            foreach (var node in peripheralNodes)
+            {
+                dirichletBCs.Add(new NodalUnknownVariable(node, ConvectionDiffusionDof.UnknownVariable, boundaryCondition));
+            }
+
+            model.BoundaryConditions.Add(new ConvectionDiffusionBoundaryConditionSet(dirichletBCs, new INodalConvectionDiffusionNeumannBoundaryCondition[] { }));
         }
 
         public (IParentAnalyzer analyzer, ISolver solver, IChildAnalyzer loadcontrolAnalyzer) GetAppropriateSolverAnalyzerAndLog(Model model, double TimeStep, double TotalTime, int currentStep, int nIncrements)
