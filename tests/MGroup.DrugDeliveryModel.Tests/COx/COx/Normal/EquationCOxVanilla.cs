@@ -108,15 +108,15 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTerm = new Dictionary<int, Func<double, double>>();
         public Func<double, double> getProductionFuncWithoutConstantTerm(int i)
         {
-            return (double Cox) => -PerOx * Sv * Cox - Aox * T[i] * Cox / (Cox + Kox);
-            //return (double Cox) => -PerOx * Sv * Cox; //Linear
+            //return (double Cox) => -PerOx * Sv * Cox - Aox * T[i] * Cox / (Cox + Kox);
+            return (double Cox) => -PerOx * Sv * Cox; //Linear
         }
 
         private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTermDerivative = new Dictionary<int, Func<double, double>>();
         public Func<double, double> getProductionFuncWithoutConstantTermDerivative(int i)
         {
-            return (double Cox) => -PerOx * Sv - Aox * T[i] / (Cox + Kox) + Aox * T[i] * Cox * Math.Pow(Cox + Kox, -2);
-            //return (double Cox) => -PerOx * Sv; //Linear
+            //return (double Cox) => -PerOx * Sv - Aox * T[i] / (Cox + Kox) + Aox * T[i] * Cox * Math.Pow(Cox + Kox, -2);
+            return (double Cox) => -PerOx * Sv; //Linear
         }
 
         static double[] expectedLinSolution = new double[]
