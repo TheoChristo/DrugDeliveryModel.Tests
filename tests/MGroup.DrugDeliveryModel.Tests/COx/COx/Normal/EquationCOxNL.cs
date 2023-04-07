@@ -22,7 +22,7 @@ using System.Diagnostics;
 
 namespace MGroup.DrugDeliveryModel.Tests.Integration
 {
-    public class EquationCoxNL
+    public class EquationsTests13DistributedModelBuilderCox
     {
         //---------------------------------------Equation Cox---------------------------------------
 
@@ -31,7 +31,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         /// The average value of the three components of the fluid velocity vector  [m/s]
         /// </summary>
         private Dictionary<int, double[]> FluidSpeed = new Dictionary<int, double[]>(); // 2.32E-4 [m/s]
-        double FluidInit = -2.32;
+        double FluidInit = 2.32;
         /// <summary>
         /// Diffusivity of oxygen [m2/s]
         /// </summary>
@@ -110,15 +110,15 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTerm = new Dictionary<int, Func<double, double>>();
         public Func<double, double> getProductionFuncWithoutConstantTerm(int i)
         {
-            return (double Cox) => -PerOx * Sv * (CiOx - Cox) - Aox * T[i] * Cox / (Cox + Kox);
-            //return (double Cox) => -PerOx * Sv * Cox; //Linear
+            //return (double Cox) => -PerOx * Sv * (CiOx - Cox) - Aox * T[i] * Cox / (Cox + Kox);
+            return (double Cox) => -PerOx * Sv * Cox; //Linear
         }
 
         private Dictionary<int, Func<double, double>> ProductionFuncsWithoutConstantTermDerivative = new Dictionary<int, Func<double, double>>();
         public Func<double, double> getProductionFuncWithoutConstantTermDerivative(int i)
         {
-            return (double Cox) => -PerOx * Sv - Aox * T[i] / (Cox + Kox) + Aox * T[i] * Cox * Math.Pow(Cox + Kox, -2);
-            //return (double Cox) => -PerOx * Sv; //Linear
+            //return (double Cox) => -PerOx * Sv - Aox * T[i] / (Cox + Kox) + Aox * T[i] * Cox * Math.Pow(Cox + Kox, -2);
+            return (double Cox) => -PerOx * Sv; //Linear
         }
 
         [Theory]
@@ -174,11 +174,11 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             bool ret = true;
             double tolerance = 1e-1;
 
-            for (var i=0 ; i < Math.Min(expectedNonLinSolution.Length, solution.Length) ; i++)
+            for (var i=0 ; i < Math.Min(expectedLinSolution.Length, solution.Length) ; i++)
             {
-                var error = Math.Abs(solution[i] - expectedNonLinSolution[i]);
+                var error = Math.Abs(solution[i] - expectedLinSolution[i]);
                 Debug.WriteLine("\n======\nStep " + i);
-                Debug.WriteLine("\tExpected   :" + expectedNonLinSolution[i]);
+                Debug.WriteLine("\tExpected   :" + expectedLinSolution[i]);
                 Debug.WriteLine("\tCalculated :" + solution[i]);
                 Debug.WriteLine("\tError      :" + error);
                 if ( error > tolerance)
