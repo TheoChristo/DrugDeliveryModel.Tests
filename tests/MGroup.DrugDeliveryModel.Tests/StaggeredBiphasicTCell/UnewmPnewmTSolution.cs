@@ -31,7 +31,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         const double Sc = 0.1;
 
         private const double timeStep = 0.00001; // in sec
-        const double totalTime = 0.001 ; // in sec
+        const double totalTime = 0.01 ; // in sec
         static int incrementsPertimeStep = 1;
         static int currentTimeStep = 0;
 
@@ -365,7 +365,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             dp_dxi.Add(gp_dP_dz_Overtime);
 
 
-            double[] tCell = new double[(int)(totalTime / timeStep)];
+            double[] tCell = new double[(int)(totalTime / timeStep)+1];
 
             int monitoredGPDivVelocity_elemID = -1; 
             int monitoredGPpressureGrad_elemID = -1; 
@@ -393,7 +393,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 totalTime, incrementsPertimeStep);
 
             var staggeredAnalyzer = new StepwiseStaggeredAnalyzer(equationModel.ParentAnalyzers,
-                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 20, tolerance: 0.00001);
+                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 40, tolerance: 0.00001);
             for (currentTimeStep = 0; currentTimeStep < totalTime / timeStep; currentTimeStep++)
             {
                 equationModel.CurrentTimeStep = currentTimeStep;

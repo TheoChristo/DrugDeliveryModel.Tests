@@ -23,7 +23,7 @@ using MGroup.FEM.Structural.Continuum;
 
 namespace MGroup.DrugDeliveryModel.Tests.Integration
 {
-	public class CoupledBiphasicTCellModelProviderNewmark2
+	public class CoupleUPnewmarkT
     {
         public Eq78ModelProviderForStaggeredSolutionex7ref eq78ModelProviderForCouplin { get; }
         public Eq9ModelProvider eq9ModelProvider { get; }
@@ -61,7 +61,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
         private int incrementsPerStep;
 
-        public CoupledBiphasicTCellModelProviderNewmark2(Eq78ModelProviderForStaggeredSolutionex7ref Eq78ModelProviderForStaggeredSolutionex7ref,
+        public CoupleUPnewmarkT(Eq78ModelProviderForStaggeredSolutionex7ref Eq78ModelProviderForStaggeredSolutionex7ref,
                                                  Eq9ModelProvider solidPhaseProvider,
                                                  TCellModelProvider tCellModelProvider,
                                                  ComsolMeshReader comsolReader,
@@ -131,20 +131,20 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
             //for (int j = 0; j < ParentAnalyzers.Length; j++)
             //{
-            //(ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
-
+                (ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
+            
             //}
             //var velocities = eq9ModelProvider.GetVelocities();
 
-            //model[1].BoundaryConditions.Clear();
-            //var velocities = eq9ModelProvider.GetVelocities2();
+            model[1].BoundaryConditions.Clear();
+            var velocities = eq9ModelProvider.GetVelocities2();
 
             foreach (var elem in reader.ElementConnectivity)
             {
                 SolidVelocityAtElementGaussPoints[elem.Key] = new double[][]{new double[]{
-                    ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][0] * 1000,
-                    ((ContinuumElement3DGrowth) model[1].ElementsDictionary[elem.Key]).velocity[0][1] * 1000,
-                    ((ContinuumElement3DGrowth) model[1].ElementsDictionary[elem.Key]).velocity[0][2] * 1000 }};
+                    velocities[elem.Key][0][0] * 1000,
+                    velocities[elem.Key][0][1] * 1000,
+                    velocities[elem.Key][0][2] * 1000 }};
             }
 
             //var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
@@ -164,7 +164,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             model[1] = eq9ModelProvider.GetModel();
             eq9ModelProvider.AddBoundaryConditions(model[1]);
             (analyzers[1], solvers[1], nlAnalyzers[1]) = eq9ModelProvider.GetAppropriateSolverAnalyzerAndLog(model[1], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
-            
+            ParentAnalyzers[1] = analyzers[1];
+
+
             model[2] = TCellModelProvider.GetModel();
             TCellModelProvider.AddBoundaryConditions(model[2]);
             (analyzers[2], solvers[2], nlAnalyzers[2]) = TCellModelProvider.GetAppropriateSolverAnalyzerAndLog(model[2], timeStep, totalTime, CurrentTimeStep);
@@ -203,15 +205,15 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 //}
                 //var velocities = eq9ModelProvider.GetVelocities();
 
-                //model[1].BoundaryConditions.Clear();
-                //var velocities = eq9ModelProvider.GetVelocities2();
+                model[1].BoundaryConditions.Clear();
+                var velocities = eq9ModelProvider.GetVelocities2();
 
                 foreach (var elem in reader.ElementConnectivity)
                 {
                     SolidVelocityAtElementGaussPoints[elem.Key] = new double[][]{new double[]{
-                    ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity[0][0] * 1000,
-                    ((ContinuumElement3DGrowth) model[1].ElementsDictionary[elem.Key]).velocity[0][1] * 1000,
-                    ((ContinuumElement3DGrowth) model[1].ElementsDictionary[elem.Key]).velocity[0][2] * 1000 }};
+                    velocities[elem.Key][0][0] * 1000,
+                    velocities[elem.Key][0][1] * 1000,
+                    velocities[elem.Key][0][2] * 1000 }};
                 }
 
                 //var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
@@ -236,8 +238,8 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             model[1] = eq9ModelProvider.GetModel();
             eq9ModelProvider.AddBoundaryConditions(model[1]);
             (analyzers[1], solvers[1], nlAnalyzers[1]) = eq9ModelProvider.GetAppropriateSolverAnalyzerAndLog(model[1], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
-            
-            
+            ParentAnalyzers[1] = analyzers[1];
+
             model[2] = TCellModelProvider.GetModel();
             TCellModelProvider.AddBoundaryConditions(model[2]);
             if (CurrentTimeStep == 0)

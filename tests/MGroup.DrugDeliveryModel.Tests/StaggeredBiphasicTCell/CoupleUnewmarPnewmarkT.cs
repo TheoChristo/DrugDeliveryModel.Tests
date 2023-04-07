@@ -147,9 +147,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                     velocities[elem.Key][0][2] * 1000 }};
             }
 
-            //var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
-            //div_vs = velocityDIVs;
-            //eq78ModelProviderForCouplin.div_vs = div_vs;
+            var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
+            div_vs = velocityDIVs;
+            eq78ModelProviderForCouplin.div_vs = div_vs;
             #region analyzers are cleared here as they are overwritten in next commands
             #endregion
 
@@ -216,9 +216,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                     velocities[elem.Key][0][2] * 1000 }};
                 }
 
-                //var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
-                //div_vs = velocityDIVs;
-                //eq78ModelProviderForCouplin.div_vs = div_vs;
+                var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
+                div_vs = velocityDIVs;
+                eq78ModelProviderForCouplin.div_vs = div_vs;
                 #region analyzers are cleared here as they are overwritten in next commands
                 #endregion
 

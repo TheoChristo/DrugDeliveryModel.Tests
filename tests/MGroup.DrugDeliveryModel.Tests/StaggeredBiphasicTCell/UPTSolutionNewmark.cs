@@ -327,38 +327,38 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             pressureMonitorID = Utilities.FindNodeIdFromNodalCoordinates(comsolReader.NodesDictionary, pressureMonitorNodeCoords, 1e-2);
             tCellMonitorID = Utilities.FindNodeIdFromNodalCoordinates(comsolReader.NodesDictionary, tCellMonitorNodeCoords, 1e-2);
 
-            var p_i = new double[(int)(totalTime / timeStep)];
+            var p_i = new double[(int)(totalTime / timeStep)+1];
 
-            double[] structuralResultsX = new double[(int)(totalTime / timeStep)];
-            double[] structuralResultsY = new double[(int)(totalTime / timeStep)];
-            double[] structuralResultsZ = new double[(int)(totalTime / timeStep)];
+            double[] structuralResultsX = new double[(int)(totalTime / timeStep)+1];
+            double[] structuralResultsY = new double[(int)(totalTime / timeStep)+1];
+            double[] structuralResultsZ = new double[(int)(totalTime / timeStep)+1];
             var displacements = new List<double[]>();
             displacements.Add(structuralResultsX);
             displacements.Add(structuralResultsY);
             displacements.Add(structuralResultsZ);
             
-            double[] velocityResultsX = new double[(int)(totalTime / timeStep)];
-            double[] velocityResultsY = new double[(int)(totalTime / timeStep)];
-            double[] velocityResultsZ = new double[(int)(totalTime / timeStep)];
+            double[] velocityResultsX = new double[(int)(totalTime / timeStep) + 1];
+            double[] velocityResultsY = new double[(int)(totalTime / timeStep) + 1];
+            double[] velocityResultsZ = new double[(int)(totalTime / timeStep) + 1];
             var velocities = new List<double[]>();
             velocities.Add(velocityResultsX);
             velocities.Add(velocityResultsY);
             velocities.Add(velocityResultsZ);
             
             
-            double[] gp_dut_dx_OverTime = new double[(int)(totalTime / timeStep)];
-            double[] gp_dvt_dy_OverTime = new double[(int)(totalTime / timeStep)];
-            double[] gp_dwt_dz_OverTime = new double[(int)(totalTime / timeStep)];
+            double[] gp_dut_dx_OverTime = new double[(int)(totalTime / timeStep) + 1];
+            double[] gp_dvt_dy_OverTime = new double[(int)(totalTime / timeStep) + 1];
+            double[] gp_dwt_dz_OverTime = new double[(int)(totalTime / timeStep) + 1];
             var divVelocity = new List<double[]>();
             divVelocity.Add(gp_dut_dx_OverTime);
             divVelocity.Add(gp_dvt_dy_OverTime);
             divVelocity.Add(gp_dwt_dz_OverTime);
 
 
-            double[] gp_div_v_OverTime = new double[(int)(totalTime / timeStep)];
-            double[] gp_dP_dx_OverTime = new double[(int)(totalTime / timeStep)];
-            double[] gp_dP_dy_OverTime = new double[(int)(totalTime / timeStep)];
-            double[] gp_dP_dz_Overtime = new double[(int)(totalTime / timeStep)];
+            double[] gp_div_v_OverTime = new double[(int)(totalTime / timeStep) + 1];
+            double[] gp_dP_dx_OverTime = new double[(int)(totalTime / timeStep) + 1];
+            double[] gp_dP_dy_OverTime = new double[(int)(totalTime / timeStep) + 1];
+            double[] gp_dP_dz_Overtime = new double[(int)(totalTime / timeStep) + 1];
             var dp_dxi = new List<double[]>();
             dp_dxi.Add(gp_dP_dx_OverTime);
             dp_dxi.Add(gp_dP_dy_OverTime);
@@ -388,12 +388,12 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             var tCellModel = new TCellModelProvider(K1, K2, dummyFieldCOx, solidVelocity, comsolReader, tCellMonitorDOF, tCellMonitorID, tCellDirichletBC, tCellNeumannBC, initialTCellDensity);
             
 
-            var equationModel = new CoupledBiphasicTCellModelProviderNewmark(pressureModel, structuralModel, tCellModel, comsolReader, lambda,
+            var equationModel = new CoupleUPnewmarkT(pressureModel, structuralModel, tCellModel, comsolReader, lambda,
                 pressureTensorDivergenceAtElementGaussPoints, velocityDivergenceAtElementGaussPoints, solidVelocity,timeStep,
                 totalTime, incrementsPertimeStep);
 
             var staggeredAnalyzer = new StepwiseStaggeredAnalyzer(equationModel.ParentAnalyzers,
-                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 20, tolerance: 0.0001);
+                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 20, tolerance: 0.00001);
             for (currentTimeStep = 0; currentTimeStep < totalTime / timeStep; currentTimeStep++)
             {
                 equationModel.CurrentTimeStep = currentTimeStep;

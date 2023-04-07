@@ -23,10 +23,10 @@ using MGroup.FEM.Structural.Continuum;
 
 namespace MGroup.DrugDeliveryModel.Tests.Integration
 {
-	public class CoupledBiphasicTCellModelProviderNewmark
+	public class CoupledUPNoNewmarkT
     {
         public Eq78ModelProviderForStaggeredSolutionex7ref eq78ModelProviderForCouplin { get; }
-        public Eq9ModelProviderForStaggeredSolutionEx7Ref Eq9ModelProviderForStaggeredSolutionEx7Ref { get; }
+        public Eq9ModelProvider eq9ModelProvider { get; }
         public TCellModelProvider TCellModelProvider { get; }
 
         public Model[] model;
@@ -61,14 +61,14 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
         private int incrementsPerStep;
 
-        public CoupledBiphasicTCellModelProviderNewmark(Eq78ModelProviderForStaggeredSolutionex7ref Eq78ModelProviderForStaggeredSolutionex7ref,
-                                                 Eq9ModelProviderForStaggeredSolutionEx7Ref solidPhaseProvider,
+        public CoupledUPNoNewmarkT(Eq78ModelProviderForStaggeredSolutionex7ref Eq78ModelProviderForStaggeredSolutionex7ref,
+                                                 Eq9ModelProvider solidPhaseProvider,
                                                  TCellModelProvider tCellModelProvider,
                                                  ComsolMeshReader comsolReader,
             Dictionary<int, double> lambda, Dictionary<int, double[][]> pressureTensorDivergenceAtElementGaussPoints,
             Dictionary<int, double[]> div_vs, Dictionary<int, double[][]> velocityAtElementGaussPoints, double timeStep, double totalTime, int incrementsPerStep)
         {
-            Eq9ModelProviderForStaggeredSolutionEx7Ref = solidPhaseProvider;
+            eq9ModelProvider = solidPhaseProvider;
             eq78ModelProviderForCouplin = Eq78ModelProviderForStaggeredSolutionex7ref;
             TCellModelProvider = tCellModelProvider;
             IsoparametricJacobian3D.DeterminantTolerance = 1e-20;
@@ -129,6 +129,30 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                     SolidVelocityAtElementGaussPoints[elem.Key][0][2] * 1000;
             }
 
+            //for (int j = 0; j < ParentAnalyzers.Length; j++)
+            //{
+            //(ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
+
+            //}
+            //var velocities = eq9ModelProvider.GetVelocities();
+
+            //model[1].BoundaryConditions.Clear();
+            //var velocities = eq9ModelProvider.GetVelocities2();
+
+            //foreach (var elem in reader.ElementConnectivity)
+            //{
+            //    SolidVelocityAtElementGaussPoints[elem.Key] = new double[][]{new double[]{
+            //        velocities[elem.Key][0][0] * 1000,
+            //        velocities[elem.Key][0][1] * 1000,
+            //        velocities[elem.Key][0][2] * 1000 }};
+            //}
+
+            //var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
+            //div_vs = velocityDIVs;
+            //eq78ModelProviderForCouplin.div_vs = div_vs;
+            #region analyzers are cleared here as they are overwritten in next commands
+            #endregion
+
             model = new Model[3];
             
             //Create model for eq78 (fluid pressure)
@@ -137,9 +161,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             (analyzers[0], solvers[0], nlAnalyzers[0]) = eq78ModelProviderForCouplin.GetAppropriateSolverAnalyzerAndLog(model[0], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
 
             //Create model for eq9 (hyper-elastic material)
-            model[1] = Eq9ModelProviderForStaggeredSolutionEx7Ref.GetModel();
-            Eq9ModelProviderForStaggeredSolutionEx7Ref.AddBoundaryConditions(model[1]);
-            (analyzers[1], solvers[1], nlAnalyzers[1]) = Eq9ModelProviderForStaggeredSolutionEx7Ref.GetAppropriateSolverAnalyzerAndLog(model[1], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
+            model[1] = eq9ModelProvider.GetModel();
+            eq9ModelProvider.AddBoundaryConditions(model[1]);
+            (analyzers[1], solvers[1], nlAnalyzers[1]) = eq9ModelProvider.GetAppropriateSolverAnalyzerAndLog(model[1], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
             
             model[2] = TCellModelProvider.GetModel();
             TCellModelProvider.AddBoundaryConditions(model[2]);
@@ -174,7 +198,8 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 }
                 foreach (var elem in reader.ElementConnectivity)
                 {
-                    SolidVelocityAtElementGaussPoints[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity;
+                    SolidVelocityAtElementGaussPoints[elem.Key] =
+                        ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity;
                     SolidVelocityAtElementGaussPoints[elem.Key][0][0] =
                         SolidVelocityAtElementGaussPoints[elem.Key][0][0] * 1000;
                     SolidVelocityAtElementGaussPoints[elem.Key][0][1] =
@@ -182,6 +207,32 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                     SolidVelocityAtElementGaussPoints[elem.Key][0][2] =
                         SolidVelocityAtElementGaussPoints[elem.Key][0][2] * 1000;
                 }
+
+
+                //for (int j = 0; j < ParentAnalyzers.Length; j++)
+                //{
+                //(ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
+
+                //}
+                //var velocities = eq9ModelProvider.GetVelocities();
+
+                //model[1].BoundaryConditions.Clear();
+                //var velocities = eq9ModelProvider.GetVelocities2();
+
+                //foreach (var elem in reader.ElementConnectivity)
+                //{
+                //    SolidVelocityAtElementGaussPoints[elem.Key] = new double[][]{new double[]{
+                //    velocities[elem.Key][0][0] * 1000,
+                //    velocities[elem.Key][0][1] * 1000,
+                //    velocities[elem.Key][0][2] * 1000 }};
+                //}
+
+                //var velocityDIVs = eq9ModelProvider.GetVelocityDIV();
+                //div_vs = velocityDIVs;
+                //eq78ModelProviderForCouplin.div_vs = div_vs;
+                #region analyzers are cleared here as they are overwritten in next commands
+                #endregion
+
             }
 
 
@@ -195,9 +246,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             }
             (analyzers[0], solvers[0], nlAnalyzers[0]) = eq78ModelProviderForCouplin.GetAppropriateSolverAnalyzerAndLog(model[0], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
 
-            model[1] = Eq9ModelProviderForStaggeredSolutionEx7Ref.GetModel();
-            Eq9ModelProviderForStaggeredSolutionEx7Ref.AddBoundaryConditions(model[1]);
-            (analyzers[1], solvers[1], nlAnalyzers[1]) = Eq9ModelProviderForStaggeredSolutionEx7Ref.GetAppropriateSolverAnalyzerAndLog(model[1], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
+            model[1] = eq9ModelProvider.GetModel();
+            eq9ModelProvider.AddBoundaryConditions(model[1]);
+            (analyzers[1], solvers[1], nlAnalyzers[1]) = eq9ModelProvider.GetAppropriateSolverAnalyzerAndLog(model[1], timeStep, totalTime, CurrentTimeStep, incrementsPerStep);
             
             
             model[2] = TCellModelProvider.GetModel();
@@ -225,7 +276,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
         public void SaveStateFromElements()
         {
-            Eq9ModelProviderForStaggeredSolutionEx7Ref.SaveStateFromElements(model[1]);
+            eq9ModelProvider.SaveStateFromElements(model[1]);
         }
     }
 }

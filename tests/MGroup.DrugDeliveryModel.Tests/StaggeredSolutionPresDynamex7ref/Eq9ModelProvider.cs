@@ -280,10 +280,11 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             return velcocities;
         }
 
+        private IGlobalVector modelVelocities;
         public Dictionary<int, double[][]> GetVelocities2()
         {
             var nodalDofs = new StructuralDof[] { StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ };
-            var modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
+            modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
             modelVelocities.CheckForCompatibility = false;
             var velocityNodalResults = algebraicModel.ExtractAllResults(modelVelocities);
             var velocityNodalData = velocityNodalResults.Data;
@@ -345,7 +346,7 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
         public Dictionary<int, double[]> GetVelocityDIV()
         {
             var nodalDofs = new StructuralDof[] { StructuralDof.TranslationX, StructuralDof.TranslationY, StructuralDof.TranslationZ };
-            var modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
+            //var modelVelocities = analyzer.CreateState().StateVectors["First order derivative of solution"].Copy();
             modelVelocities.CheckForCompatibility = false;
             var velocityNodalResults = algebraicModel.ExtractAllResults(modelVelocities);
             var velocityNodalData = velocityNodalResults.Data;
