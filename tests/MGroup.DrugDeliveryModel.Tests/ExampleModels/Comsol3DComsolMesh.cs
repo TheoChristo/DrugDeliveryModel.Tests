@@ -98,9 +98,9 @@ namespace ConvectionDiffusionTest
 			foreach (var elementConnectivity in reader.ElementConnectivity)
 			{
 				var element = elementFactory.CreateElement(elementConnectivity.Value.Item1, elementConnectivity.Value.Item2);
-				element.LinearProduction = false;
-				element.ProductionFunction = ProductionFunction;
-				element.ProductionFunctionDerivative = ProductionFunctionDerivative;
+				//element.LinearProduction = false;
+				//element.ProductionFunction = ProductionFunction;
+				//element.ProductionFunctionDerivative = ProductionFunctionDerivative; //TODOnewnug
 				model.ElementsDictionary.Add(elementConnectivity.Key, element);
 				model.SubdomainsDictionary[0].Elements.Add(element);
 			}

@@ -26,6 +26,7 @@ using MGroup.MSolve.Numerics.Integration.Quadratures;
 using MGroup.MSolve.Solution.LinearSystem;
 using TriangleNet.Tools;
 using MGroup.MSolve.Numerics.Interpolation.Jacobians;
+using MGroup.MSolve.Discretization.BoundaryConditions;
 
 namespace MGroup.DrugDeliveryModel.Tests.EquationModels
 {
@@ -137,17 +138,27 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             var dynamicMaterial = new TransientAnalysisProperties(density: density, rayleighCoeffMass: 0, rayleighCoeffStiffness: 0);
             var elementFactory = new ContinuumElement3DFactory(elasticMaterial, dynamicMaterial);
 
+            var volumeLoads = new List<IElementStructuralNeumannBoundaryCondition>();
+
             //var domains = new Dictionary<int, double[]>(2);
             foreach (var elementConnectivity in reader.ElementConnectivity)
             {
                 var domainId = elementConnectivity.Value.Item3;
                 var element = elementFactory.CreateNonLinearElementGrowt(elementConnectivity.Value.Item1, elementConnectivity.Value.Item2, domainId == 0 ? materialTumor : materialNormal, dynamicMaterial, lambda[elementConnectivity.Key]);
-                element.volumeForce = pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0];
+                //element.volumeForce = pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0];
+                var volumeForceX = new ElementDistributedLoad(element, StructuralDof.TranslationX, pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][0]);
+                var volumeForceY = new ElementDistributedLoad(element, StructuralDof.TranslationY, pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][1]);
+                var volumeForceZ = new ElementDistributedLoad(element, StructuralDof.TranslationZ, pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][2]);
+                volumeLoads.AddRange(new [] {volumeForceX, volumeForceY, volumeForceZ});
                 element.ID = elementConnectivity.Key;
-                if (elementSavedDisplacementsIsInitialized) { element.lastConvergedDisplacements = elementslastConvergedDisplacements[element.ID]; }
+                //if (elementSavedDisplacementsIsInitialized) { element.lastConvergedDisplacements = elementslastConvergedDisplacements[element.ID]; }
                 model.ElementsDictionary.Add(elementConnectivity.Key, element);
                 model.SubdomainsDictionary[0].Elements.Add(element);
             }
+
+            var modelNeumannConditions = new StructuralBoundaryConditionSet(null,null,null,volumeLoads,null,null);
+            model.BoundaryConditions.Add(modelNeumannConditions);
+
             return model;
         }
         
@@ -206,13 +217,13 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
 
         public void SaveStateFromElements(Model model)
         {
-            elementslastConvergedDisplacements = new Dictionary<int, double[]>();
-            foreach (var elem in reader.ElementConnectivity)
-            {
-                elementslastConvergedDisplacements[elem.Key] = ((ContinuumElement3DGrowth)model.ElementsDictionary[elem.Key]).localDisplacements.Copy();
-            }
+            //elementslastConvergedDisplacements = new Dictionary<int, double[]>();
+            //foreach (var elem in reader.ElementConnectivity)
+            //{
+            //    elementslastConvergedDisplacements[elem.Key] = ((ContinuumElement3DGrowth)model.ElementsDictionary[elem.Key]).localDisplacements.Copy();
+            //}
 
-            elementSavedDisplacementsIsInitialized = true;
+            //elementSavedDisplacementsIsInitialized = true;
         }
 
         public Dictionary<int, double[][]> GetVelocities()

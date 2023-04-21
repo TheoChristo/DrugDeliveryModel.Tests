@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -11,6 +11,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="MGroup.FEM.ConvectionDiffusion" Version="0.2.0-unstable.129" />
+    <PackageReference Include="MGroup.FEM.Structural" Version="0.2.0-unstable.129" />
+    <PackageReference Include="MGroup.NumericalAnalyzers.Discretization" Version="0.2.0-unstable.60" />
+    <PackageReference Include="MGroup.Solvers" Version="0.2.0-unstable.21" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="Moq" Version="4.13.0" />
     <PackageReference Include="OpenCover" Version="4.7.922" />
@@ -26,13 +30,6 @@
     <None Remove="MGroup.FEM.Structural" />
     <None Remove="MGroup.NumericalAnalyzers.Discretization" />
     <None Remove="MGroup.Solvers" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\FEM\src\MGroup.FEM.ConvectionDiffusion\MGroup.FEM.ConvectionDiffusion.csproj" />
-    <ProjectReference Include="..\..\..\FEM\src\MGroup.FEM.Structural\MGroup.FEM.Structural.csproj" />
-    <ProjectReference Include="..\..\..\NumericalAnalyzers\src\MGroup.NumericalAnalyzers.Discretization\MGroup.NumericalAnalyzers.Discretization.csproj" />
-    <ProjectReference Include="..\..\..\NumericalAnalyzers\src\MGroup.NumericalAnalyzers\MGroup.NumericalAnalyzers.csproj" />
-    <ProjectReference Include="..\..\..\Solvers\src\MGroup.Solvers\MGroup.Solvers.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="StaggeredSolutionPresDynamex8\results1\" />

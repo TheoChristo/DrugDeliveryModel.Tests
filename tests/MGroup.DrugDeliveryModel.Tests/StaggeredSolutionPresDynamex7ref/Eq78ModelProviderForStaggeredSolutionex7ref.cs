@@ -21,6 +21,15 @@ using MGroup.MSolve.Solution;
 using MGroup.Constitutive.ConvectionDiffusion.BoundaryConditions;
 using MGroup.Constitutive.ConvectionDiffusion.InitialConditions;
 using System.Security.AccessControl;
+using MGroup.Solvers.AlgebraicModel;
+using MGroup.LinearAlgebra.Matrices;
+using MGroup.FEM.ConvectionDiffusion.Isoparametric;
+using System.Reflection.PortableExecutable;
+using System.Xml.Linq;
+using TriangleNet.Tools;
+using MGroup.MSolve.Numerics.Integration.Quadratures;
+using MGroup.MSolve.Numerics.Interpolation;
+using MGroup.MSolve.Discretization;
 
 namespace MGroup.DrugDeliveryModel.Tests.Integration
 {
@@ -67,6 +76,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private ConvectionDiffusionDof dofTypeToMonitor;
 
         private ComsolMeshReader modelReader;
+
+        public GlobalAlgebraicModel<Matrix> algebraicModel;
+
 
         public Eq78ModelProviderForStaggeredSolutionex7ref(ComsolMeshReader modelReader,
             double k_th_tumor, double k_th_host, double Lp, double Sv, double pv, double LplSvl_tumor, double LplSvl_host,
@@ -150,7 +162,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {
             var solverFactory = new DenseMatrixSolver.Factory() { IsMatrixPositiveDefinite = false }; //Dense Matrix Solver solves with zero matrices!
             //var solverFactory = new SkylineSolver.Factory() { FactorizationPivotTolerance = 1e-8 };
-            var algebraicModel = solverFactory.BuildAlgebraicModel(model);
+            algebraicModel = solverFactory.BuildAlgebraicModel(model);
             var solver = solverFactory.BuildSolver(algebraicModel);
             var provider = new ProblemConvectionDiffusion(model, algebraicModel);
 
@@ -178,6 +190,65 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             loadControlAnalyzer.LogFactory = new LinearAnalyzerLogFactory(watchDofs[0], algebraicModel);
 
             return (analyzer, solver, loadControlAnalyzer);
+        }
+
+        public List<double> RetrievePressureSolution(ISolver solver, IChildAnalyzer childAnalyzer, Model model, GlobalAlgebraicModel<Matrix> algebraicModel)
+        {
+            List<double> p = new List<double>();
+
+            var u = childAnalyzer.CurrentAnalysisResult;
+
+            var currentSolution = algebraicModel.ExtractAllResults(u);
+            //var freedofs = algebraicModel.SubdomainFreeDofOrdering;
+
+            foreach (var node in model.NodesDictionary.Values)
+            {
+                p.Add(currentSolution.Data[node.ID, 0]);
+            }
+
+            return p;
+        }
+
+        internal void UpdatePressureDivergenceDictionary(Dictionary<int, double[][]> pressureTensorDivergenceAtElementGaussPoints, ISolver solver, IChildAnalyzer childAnalyzer, Model model, GlobalAlgebraicModel<Matrix> algebraicModel)
+        {
+            var p = childAnalyzer.CurrentAnalysisResult;
+            var interpolation = InterpolationTet4.UniqueInstance;
+            var quadrature = TetrahedronQuadrature.Order1Point1;
+            foreach (var elem in model.ElementsDictionary.Values)
+            {
+                var elemSoultion = algebraicModel.ExtractElementVector(p, elem);
+                pressureTensorDivergenceAtElementGaussPoints[elem.ID] = UpdatePressureAndGradientsOfElement(elemSoultion, interpolation, quadrature, elem);
+            }
+           
+        }
+
+        private double[][] UpdatePressureAndGradientsOfElement(double[] localDisplacements, IIsoparametricInterpolation3D Interpolation,
+         IQuadrature3D quadratureForMass, IElementType element)
+        {
+            double[][] pressureTensorDivergenceAtGaussPoints = new double[quadratureForMass.IntegrationPoints.Count][];
+            IReadOnlyList<Matrix> shapeFunctionNaturalDerivatives;
+            shapeFunctionNaturalDerivatives = Interpolation.EvaluateNaturalGradientsAtGaussPoints(quadratureForMass);
+            var jacobians = shapeFunctionNaturalDerivatives.Select(x => new IsoparametricJacobian3D(element.Nodes, x));
+            Matrix[] jacobianInverse = jacobians.Select(x => x.InverseMatrix.Transpose()).ToArray();
+            for (int gp = 0; gp < quadratureForMass.IntegrationPoints.Count; ++gp)
+            {
+                double[] dphi_dnatural = new double[3]; //{ dphi_dksi, dphi_dheta, dphi_dzeta}
+                for (int i1 = 0; i1 < shapeFunctionNaturalDerivatives[gp].NumRows; i1++)
+                {
+                    dphi_dnatural[0] += shapeFunctionNaturalDerivatives[gp][i1, 0] * localDisplacements[i1];
+                    dphi_dnatural[1] += shapeFunctionNaturalDerivatives[gp][i1, 1] * localDisplacements[i1];
+                    dphi_dnatural[2] += shapeFunctionNaturalDerivatives[gp][i1, 2] * localDisplacements[i1];
+                }
+
+                var dphi_dnaturalMAT = Matrix.CreateFromArray(dphi_dnatural, 1, 3);
+
+                var dphi_dcartesian = dphi_dnaturalMAT * jacobianInverse[gp].Transpose();
+
+                pressureTensorDivergenceAtGaussPoints[gp] = new double[3] { dphi_dcartesian[0, 0], dphi_dcartesian[0, 1], dphi_dcartesian[0, 2] };
+
+            }
+
+            return pressureTensorDivergenceAtGaussPoints;
         }
     }
 }

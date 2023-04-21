@@ -1,4 +1,4 @@
-using System;
+/*using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -439,7 +439,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 //modelMax_dP_dxOverTime[currentTimeStep] = pressureTensorDivergenceAtElementGaussPoints.Select(x => Math.Abs(x.Value[0][0])).ToArray().Max();
 
 
-                /*if (Solution.ContainsKey(currentTimeStep))
+                *//*if (Solution.ContainsKey(currentTimeStep))
                 {
                     Solution[currentTimeStep] = allValues;
                     Console.WriteLine($"Time step: {timeStep}");
@@ -448,7 +448,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 else
                 {
                     Solution.Add(currentTimeStep, allValues);
-                }*/
+                }*//*
 
                 #endregion
                 for (int j = 0; j < equationModel.ParentAnalyzers.Length; j++)
@@ -490,7 +490,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             //eq9model.load_value;
 
             //pressure_{ pr}_F_{Fval}_e{Fval_e}_LOGGEDval_ PAth name do not erase this exampleNo_{exNo}_caseNo_{caseNo}_
-            /*var writer = new MGroup.LinearAlgebra.Output.Array1DWriter();
+            *//*var writer = new MGroup.LinearAlgebra.Output.Array1DWriter();
             var patSelection = 0;
             var outputPath = patSelection == 0 ? "../../../StaggeredSolutionPresDynamex7ref/results1/" : $@"C:\Users\acivi\Documents\atuxaia\develop yperelastic withh BIO TEAM\VALIDATION EQs1\staggered_ex5\";
             writer.WriteToFile(structuralResultsX, outputPath + $@"u_{1}_.txt");
@@ -506,7 +506,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             writer.WriteToFile(p_i, outputPath + $@"p_i.txt");
             writer.WriteToFile(gp_dP_dx_OverTime, outputPath + $@"gp_dP_dx_OverTime.txt");
             writer.WriteToFile(gp_dP_dy_OverTime, outputPath + $@"gp_dP_dy_OverTime.txt");
-            writer.WriteToFile(gp_dP_dz_Overtime, outputPath + $@"gp_dP_dz_Overtime.txt");*/
+            writer.WriteToFile(gp_dP_dz_Overtime, outputPath + $@"gp_dP_dz_Overtime.txt");*//*
 
 
             //var path = outputPath+"dp_dxi_mslv.csv";
@@ -666,3 +666,4 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
     }
 }
+*/

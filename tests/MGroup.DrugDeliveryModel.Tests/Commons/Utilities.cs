@@ -12,6 +12,10 @@ using MGroup.Constitutive.Structural;
 using MGroup.FEM.ConvectionDiffusion.Isoparametric;
 using MGroup.FEM.Structural.Continuum;
 using MGroup.MSolve.Discretization.Dofs;
+using MGroup.MSolve.Discretization;
+using MGroup.MSolve.Numerics.Interpolation;
+using MGroup.MSolve.Numerics.Integration.Quadratures;
+using System.Xml.Linq;
 
 namespace MGroup.DrugDeliveryModel.Tests.Commons
 {
@@ -241,8 +245,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Commons
 			var cuurentDistance = 1000d;
 			foreach (var element in model.ElementsDictionary)
 			{
-				var elementGpCoords = ((ConvectionDiffusionElement3D)element.Value).GetGaussPointsCoordinates(0);
-				double distance = Math.Sqrt(Math.Pow(elementGpCoords[0] - gpCoords[0], 2) +
+				var elementGpCoords = GetGaussPointsCoordinates(0, element.Value);
+                //= ((ConvectionDiffusionElement3D)element.Value).GetGaussPointsCoordinates(0);
+                double distance = Math.Sqrt(Math.Pow(elementGpCoords[0] - gpCoords[0], 2) +
 				                            Math.Pow(elementGpCoords[1] - gpCoords[1], 2) +
 				                            Math.Pow(elementGpCoords[2] - gpCoords[2], 2));
 				if (distance < cuurentDistance)
@@ -252,12 +257,29 @@ namespace MGroup.DrugDeliveryModel.Tests.Commons
 				}
 			}
 
-			var foundGpCoords =
-				((ConvectionDiffusionElement3D)model.ElementsDictionary[id]).GetGaussPointsCoordinates(0);
+			var foundGpCoords = GetGaussPointsCoordinates(0, model.ElementsDictionary[id]);
+               // ((ConvectionDiffusionElement3D)model.ElementsDictionary[id]).GetGaussPointsCoordinates(0);
 			Console.WriteLine("GP with coordinates: " + foundGpCoords[0] + " " + foundGpCoords[1] + " " +
 			                  foundGpCoords[2] +
 			                  " is in element with id: " + id);
 			return id;
+		}
+
+		public static double[] GetGaussPointsCoordinates(int gpNo, IElementType element)
+		{
+			var interpolation = InterpolationTet4.UniqueInstance;
+			var quadrature = TetrahedronQuadrature.Order1Point1;
+			var Nodes = element.Nodes;
+			var shapeFunctionValues = interpolation.EvaluateFunctionsAt(quadrature.IntegrationPoints[gpNo]);
+			double[] gpCoordinates = new double[3]; //{ dphi_dksi, dphi_dheta, dphi_dzeta}
+			for (int i1 = 0; i1 < shapeFunctionValues.Length; i1++)
+			{
+				gpCoordinates[0] += shapeFunctionValues[i1] * Nodes[i1].X;
+				gpCoordinates[1] += shapeFunctionValues[i1] * Nodes[i1].Y;
+				gpCoordinates[2] += shapeFunctionValues[i1] * Nodes[i1].Z;
+			}
+
+			return gpCoordinates;
 		}
 
 		public static List<INode> FindElementNodesFromElementId(Model model, int elementId)

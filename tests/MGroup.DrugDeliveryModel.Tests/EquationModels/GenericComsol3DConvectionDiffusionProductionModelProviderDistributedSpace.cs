@@ -67,9 +67,9 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
                 var element = elementFactory.CreateElement(elementConnectivity.Value.Item1, elementConnectivity.Value.Item2);
                 if(productionDeriv != null)
                 {
-                    element.LinearProduction = false;
-                    element.ProductionFunction = productionFunc;
-                    element.ProductionFunctionDerivative = productionDeriv;
+                    //element.LinearProduction = false;
+                    //element.ProductionFunction = productionFunc;
+                    //element.ProductionFunctionDerivative = productionDeriv; //TODOnewnug
 
                 }
                 element.ID= elementConnectivity.Key; ;
@@ -118,9 +118,9 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
                 var element = elementFactory.CreateElement(elementConnectivity.Value.Item1, elementConnectivity.Value.Item2);
                 if (productionDeriv != null)
                 {
-                    element.LinearProduction = false;
-                    element.ProductionFunction = productionFunc;
-                    element.ProductionFunctionDerivative = productionDeriv;
+                    //element.LinearProduction = false;
+                    //element.ProductionFunction = productionFunc;
+                    //element.ProductionFunctionDerivative = productionDeriv; //TODOnewnug
 
                 }
                 element.ID = elementConnectivity.Key; ;

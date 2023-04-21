@@ -20,6 +20,8 @@ using MGroup.MSolve.AnalysisWorkflow;
 using MGroup.MSolve.Solution;
 using MGroup.FEM.ConvectionDiffusion.Isoparametric;
 using MGroup.FEM.Structural.Continuum;
+using System.Xml.Linq;
+using TriangleNet.Tools;
 
 namespace MGroup.DrugDeliveryModel.Tests.Integration
 {
@@ -109,14 +111,19 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             //{ 
             //    lambda[elem.Key]= lambda0;
             //}
-            foreach (var elem in reader.ElementConnectivity)
-            {
-                pressureTensorDivergenceAtElementGaussPoints[elem.Key] = ((ConvectionDiffusionElement3D)model[0].ElementsDictionary[elem.Key]).pressureTensorDivergenceAtGaussPoints;
-            }
-            foreach (var elem in reader.ElementConnectivity)
-            {
-                div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
-            }
+            
+
+            eq78ModelProviderForCouplin.UpdatePressureDivergenceDictionary(pressureTensorDivergenceAtElementGaussPoints, ParentSolvers[0], NLAnalyzers[0], model[0], eq78ModelProviderForCouplin.algebraicModel);
+            //foreach (var elem in reader.ElementConnectivity)
+            //{
+            //    pressureTensorDivergenceAtElementGaussPoints[elem.Key] = ((ConvectionDiffusionElement3D)model[0].ElementsDictionary[elem.Key]).pressureTensorDivergenceAtGaussPoints; // TODO Use the UpdatePressureAndGradients() method in the end of this class
+            //}
+
+
+            //foreach (var elem in reader.ElementConnectivity)
+            //{
+            //    div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
+            //}
             //foreach (var elem in reader.ElementConnectivity)
             //{
             //    SolidVelocityAtElementGaussPoints[elem.Key] =
@@ -190,14 +197,16 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {
             if (!(CurrentTimeStep == 0))
             {
-                foreach (var elem in reader.ElementConnectivity)
-                {
-                    pressureTensorDivergenceAtElementGaussPoints[elem.Key] = ((ConvectionDiffusionElement3D)model[0].ElementsDictionary[elem.Key]).pressureTensorDivergenceAtGaussPoints;
-                }
-                foreach (var elem in reader.ElementConnectivity)
-                {
-                    div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
-                }
+                eq78ModelProviderForCouplin.UpdatePressureDivergenceDictionary(pressureTensorDivergenceAtElementGaussPoints, ParentSolvers[0], NLAnalyzers[0], model[0], eq78ModelProviderForCouplin.algebraicModel);
+                //foreach (var elem in reader.ElementConnectivity)
+                //{
+                //    pressureTensorDivergenceAtElementGaussPoints[elem.Key] = ((ConvectionDiffusionElement3D)model[0].ElementsDictionary[elem.Key]).pressureTensorDivergenceAtGaussPoints; // TODO Use the UpdatePressureAndGradients() method in the end of this class
+                //}
+
+                //foreach (var elem in reader.ElementConnectivity)
+                //{
+                //    div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
+                //}
                 //for (int j = 0; j < ParentAnalyzers.Length; j++)
                 //{
                 //(ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
@@ -267,5 +276,33 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {
             eq9ModelProvider.SaveStateFromElements(model[1]);
         }
+
+        //private void UpdatePressureAndGradients(double[] localDisplacements)
+        //{
+        //    IReadOnlyList<Matrix> shapeFunctionNaturalDerivatives;
+        //    shapeFunctionNaturalDerivatives = Interpolation.EvaluateNaturalGradientsAtGaussPoints(QuadratureForConsistentMass);
+        //    var jacobians = shapeFunctionNaturalDerivatives.Select(x => new IsoparametricJacobian3D(Nodes, x));
+        //    Matrix[] jacobianInverse = jacobians.Select(x => x.InverseMatrix.Transpose()).ToArray();
+        //    for (int gp = 0; gp < QuadratureForConsistentMass.IntegrationPoints.Count; ++gp)
+        //    {
+        //        double[] dphi_dnatural = new double[3]; //{ dphi_dksi, dphi_dheta, dphi_dzeta}
+        //        for (int i1 = 0; i1 < shapeFunctionNaturalDerivatives[gp].NumRows; i1++)
+        //        {
+        //            dphi_dnatural[0] += shapeFunctionNaturalDerivatives[gp][i1, 0] * localDisplacements[i1];
+        //            dphi_dnatural[1] += shapeFunctionNaturalDerivatives[gp][i1, 1] * localDisplacements[i1];
+        //            dphi_dnatural[2] += shapeFunctionNaturalDerivatives[gp][i1, 2] * localDisplacements[i1];
+        //        }
+
+        //        var dphi_dnaturalMAT = Matrix.CreateFromArray(dphi_dnatural, 1, 3);
+
+        //        var dphi_dcartesian = dphi_dnaturalMAT * jacobianInverse[gp].Transpose();
+
+        //        pressureTensorDivergenceAtGaussPoints[gp] = new double[3] { dphi_dcartesian[0, 0], dphi_dcartesian[0, 1], dphi_dcartesian[0, 2] };
+
+
+
+
+        //    }
+        //}
     }
 }
