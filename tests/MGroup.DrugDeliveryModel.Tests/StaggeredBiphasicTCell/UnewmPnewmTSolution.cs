@@ -30,8 +30,8 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
     {
         const double Sc = 0.1;
 
-        private const double timeStep = 0.00001; // in sec
-        const double totalTime = 0.01 ; // in sec
+        private const double timeStep = 1e-5; // in sec
+        const double totalTime = 5e-5 ; // in sec
         static int incrementsPertimeStep = 1;
         static int currentTimeStep = 0;
 
@@ -60,9 +60,9 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         private static List<(BC, StructuralDof[], double[][], double[])> structuralDirichletBC =
             new List<(BC, StructuralDof[], double[][], double[])>()
                 {
-                    (BC.BottomDirichlet,
+                   (BC.BottomDirichlet,
                         new StructuralDof[1] { StructuralDof.TranslationZ }, new double[1][]{new double[3] {0,0,0}}, new double[] { 0.0 }),
-                    (BC.LeftDirichlet,
+                     (BC.LeftDirichlet,
                         new StructuralDof[1] { StructuralDof.TranslationX }, new double[1][]{new double[3] {0,0,0}}, new double[] { 0.0 }),
                     (BC.RightDirichlet,
                         new StructuralDof[1] { StructuralDof.TranslationX }, new double[1][]{new double[3] {0.1,0,0}}, new double[] { 0.0 }),
@@ -393,7 +393,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 totalTime, incrementsPertimeStep);
 
             var staggeredAnalyzer = new StepwiseStaggeredAnalyzer(equationModel.ParentAnalyzers,
-                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 40, tolerance: 0.00001);
+                equationModel.ParentSolvers, equationModel.CreateModel, maxStaggeredSteps: 20, tolerance: 2.5e-6);// 5e-6
             for (currentTimeStep = 0; currentTimeStep < totalTime / timeStep; currentTimeStep++)
             {
                 equationModel.CurrentTimeStep = currentTimeStep;
@@ -512,6 +512,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
 
 
             //var path = outputPath+"dp_dxi_mslv.csv";
+            CSVExporter.ExportVectorToCSV(structuralResultsZ, "../../../StaggeredBiphasicTCell/structuralResultsZ.csv");
             CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(dp_dxi), "../../../StaggeredBiphasicTCell/dp_dxi_GP_mslv.csv");
             CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(displacements), "../../../StaggeredBiphasicTCell/displacements_nodes_mslv.csv");
             CSVExporter.ExportVectorToCSV(p_i, "../../../StaggeredBiphasicTCell/pi_nodes_mslv.csv");
@@ -519,8 +520,49 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(divVelocity), "../../../StaggeredBiphasicTCell/dut_dxi_GP_mslv.csv");
             CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(velocities), "../../../StaggeredBiphasicTCell/ut_GP_mslv.csv");
 
+
+            Assert.True(ResultChecker.CheckResults(structuralResultsZ, newExpectedStructuralZ(), 1e-3));
+            Assert.True(ResultChecker.CheckResults(tCell, newExpectedTcell(), 1e-3));
+            Assert.True(ResultChecker.CheckResults(p_i, newExpectedPi(), 5e-3));
+
         }
 
+        private double[] newExpectedStructuralZ()
+        {
+            return new double[]
+            {
+                -3.6456877286238164E-09,
+                -1.8158386045147303E-08,
+                -4.698456210801063E-08,
+                -8.988382168074741E-08,
+                -1.466449575014122E-07,
+                0
+            };
+        }
+        private double[] newExpectedTcell()
+        {
+            return new double[]
+            {
+                0.015828798768462007,
+                0.04757410658256456,
+                0.1113188771876789,
+                0.207372502634971,
+                0.3360041686097046,
+                0
+            };
+        }
+        private double[] newExpectedPi()
+        {
+            return new double[]
+            {
+                -3.985855541464329E-05,
+                -0.00010498571054501387,
+                -0.00015211503485328815,
+                -0.00019122119038975137,
+                -0.00021798728223457466,
+                0
+            };
+        }
 
         public static double[] expectedDisplacments()
         {

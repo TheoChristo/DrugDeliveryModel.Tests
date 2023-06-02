@@ -1,4 +1,4 @@
-/*using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,7 +28,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         const double Sc = 0.1;
 
         private const double timeStep = 0.00001; // in sec
-        const double totalTime = 0.0001; // in sec
+        const double totalTime = 0.0004; // in sec
         static int incrementsPertimeStep = 1;
         static int currentTimeStep = 0;
 
@@ -46,7 +46,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         static double initial_dp_dy = 0.0;
         static double initial_dp_dz = 0.0;
         static double velocityDivInitialVal = 0;
-        static Dictionary<double, double[]> Solution = new Dictionary<double, double[]>();
+        //static Dictionary<double, double[]> Solution = new Dictionary<double, double[]>();
         private static List<(INode node, IDofType dof)> watchDofs = new List<(INode node, IDofType dof)>();
 
         #endregion
@@ -215,7 +215,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         //[InlineData("../../../DataFiles/workingTetMesh155.mphtxt")]
         public void MonophasicEquationModel(string fileName)
         {
-            ContinuumElement3DGrowth.dT = timeStep;
+            //ContinuumElement3DGrowth.dT = timeStep;
 
             //Read geometry
             var comsolReader = new ComsolMeshReader(fileName);
@@ -272,23 +272,23 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             displacements.Add(structuralResultsY);
             displacements.Add(structuralResultsZ);
 
-            double[] gp_dut_dx_OverTime = new double[(int)(totalTime / timeStep)];
+/*            double[] gp_dut_dx_OverTime = new double[(int)(totalTime / timeStep)];
             double[] gp_dvt_dy_OverTime = new double[(int)(totalTime / timeStep)];
             double[] gp_dwt_dz_OverTime = new double[(int)(totalTime / timeStep)];
             var divVelocity = new List<double[]>();
             divVelocity.Add(gp_dut_dx_OverTime);
             divVelocity.Add(gp_dvt_dy_OverTime);
-            divVelocity.Add(gp_dwt_dz_OverTime);
+            divVelocity.Add(gp_dwt_dz_OverTime);*/
 
 
-            double[] gp_div_v_OverTime = new double[(int)(totalTime / timeStep)];
+/*            double[] gp_div_v_OverTime = new double[(int)(totalTime / timeStep)];
             double[] gp_dP_dx_OverTime = new double[(int)(totalTime / timeStep)];
             double[] gp_dP_dy_OverTime = new double[(int)(totalTime / timeStep)];
             double[] gp_dP_dz_Overtime = new double[(int)(totalTime / timeStep)];
             var dp_dxi = new List<double[]>();
             dp_dxi.Add(gp_dP_dx_OverTime);
             dp_dxi.Add(gp_dP_dy_OverTime);
-            dp_dxi.Add(gp_dP_dz_Overtime);
+            dp_dxi.Add(gp_dP_dz_Overtime);*/
 
             int monitoredGPVelocity_elemID = -1; // TODO Orestis this will be deleeted if new logs are implemented in a right way.
             int monitoredGPpressureGrad_elemID = -1; // TODO Orestis this will be deleeted if new logs are implemented in a right way.
@@ -301,7 +301,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 LplSvl_tumor, LplSvl_host, pl, velocityDivergenceAtElementGaussPoints, pressureMonitorID, eq7n8dofTypeToMonitor,pressureDirichletBC, pressureNeumannBC);
             
             //Create Model For Structural
-            var eq9Model = new Eq9ModelProviderForStaggeredSolutionEx7Ref(comsolReader, Sc, miNormal, kappaNormal, miTumor,
+            var eq9Model = new Eq9ModelProvider(comsolReader, Sc, miNormal, kappaNormal, miTumor,
                 kappaTumor, density, timeStep, totalTime, lambda, pressureTensorDivergenceAtElementGaussPoints,
                 structuralMonitorID, eq9dofTypeToMonitor,structuralNeumannBC, structuralDirichletBC);
              
@@ -336,20 +336,20 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 structuralResultsZ[currentTimeStep] = ((DOFSLog)equationModel.ParentAnalyzers[1].ChildAnalyzer.Logs[0]).DOFValues[equationModel.model[1].GetNode(structuralMonitorID), eq9dofTypeToMonitor];
 
                 //gp (element) logs
-                gp_dP_dx_OverTime[currentTimeStep] =((ConvectionDiffusionElement3D)equationModel.model[0].ElementsDictionary[monitoredGPpressureGrad_elemID]).xcoeff_OverTimeAtGp1[0];
+/*                gp_dP_dx_OverTime[currentTimeStep] =((ConvectionDiffusionElement3D)equationModel.model[0].ElementsDictionary[monitoredGPpressureGrad_elemID]).xcoeff_OverTimeAtGp1[0];
                 gp_dP_dy_OverTime[currentTimeStep] =((ConvectionDiffusionElement3D)equationModel.model[0].ElementsDictionary[monitoredGPpressureGrad_elemID]).ycoeff_OverTimeAtGp1[0];
                 gp_dP_dz_Overtime[currentTimeStep] =((ConvectionDiffusionElement3D)equationModel.model[0].ElementsDictionary[monitoredGPpressureGrad_elemID]).zcoeff_OverTimeAtGp1[0];
                 gp_dut_dx_OverTime[currentTimeStep]= ((ContinuumElement3DGrowth)equationModel.model[1].ElementsDictionary[monitoredGPVelocity_elemID]).velocityDivergence_term1[0];
                 gp_dvt_dy_OverTime[currentTimeStep] = ((ContinuumElement3DGrowth)equationModel.model[1].ElementsDictionary[monitoredGPVelocity_elemID]).velocityDivergence_term2[0];
                 gp_dwt_dz_OverTime[currentTimeStep] = ((ContinuumElement3DGrowth)equationModel.model[1].ElementsDictionary[monitoredGPVelocity_elemID]).velocityDivergence_term3[0];
-                gp_div_v_OverTime[currentTimeStep]= ((ContinuumElement3DGrowth)equationModel.model[1].ElementsDictionary[monitoredGPVelocity_elemID]).velocityDivergence[0];
+                gp_div_v_OverTime[currentTimeStep]= ((ContinuumElement3DGrowth)equationModel.model[1].ElementsDictionary[monitoredGPVelocity_elemID]).velocityDivergence[0];*/
 
                 //model maximus (DO NOT ERASE)
                 //modelMaxVelDivOverTime[currentTimeStep] = velocityDivergenceAtElementGaussPoints.Select(x => Math.Abs(x.Value[0])).ToArray().Max();
                 //modelMax_dP_dxOverTime[currentTimeStep] = pressureTensorDivergenceAtElementGaussPoints.Select(x => Math.Abs(x.Value[0][0])).ToArray().Max();
 
 
-                *//*if (Solution.ContainsKey(currentTimeStep))
+/*                if (Solution.ContainsKey(currentTimeStep))
                 {
                     Solution[currentTimeStep] = allValues;
                     Console.WriteLine($"Time step: {timeStep}");
@@ -358,7 +358,7 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 else
                 {
                     Solution.Add(currentTimeStep, allValues);
-                }*//*
+                }*/
 
                 #endregion
 
@@ -376,16 +376,6 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
                 //Console.WriteLine($"Displacement vector: {string.Join(", ", Solution[currentTimeStep])}");
             }
 
-            Assert.True(ResultChecker.CheckResults(structuralResultsZ, expectedDisplacments(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(p_i, expectedPressurevalues(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_dut_dx_OverTime, expected_dutdx_values(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_dvt_dy_OverTime, expected_dvtdy_values(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_dwt_dz_OverTime, expected_dwtdz_values(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_div_v_OverTime, expected_div_vs_values(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_dP_dx_OverTime, expected_dpdx_values(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_dP_dy_OverTime, expected_dpdy_values(), 1E-6));
-            Assert.True(ResultChecker.CheckResults(gp_dP_dz_Overtime, expected_dpdz_values(), 1E-6));
-            
 
 
 
@@ -396,31 +386,41 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             //eq9model.load_value;
 
             //pressure_{ pr}_F_{Fval}_e{Fval_e}_LOGGEDval_ PAth name do not erase this exampleNo_{exNo}_caseNo_{caseNo}_
-            *//*var writer = new MGroup.LinearAlgebra.Output.Array1DWriter();
+            var writer = new MGroup.LinearAlgebra.Output.Array1DWriter();
             var patSelection = 0;
             var outputPath = patSelection == 0 ? "../../../StaggeredSolutionPresDynamex7ref/results1/" : $@"C:\Users\acivi\Documents\atuxaia\develop yperelastic withh BIO TEAM\VALIDATION EQs1\staggered_ex5\";
             writer.WriteToFile(structuralResultsX, outputPath + $@"u_{1}_.txt");
             writer.WriteToFile(structuralResultsY, outputPath + $@"u_{2}_.txt");
             writer.WriteToFile(structuralResultsZ, outputPath + $@"u_{3}_.txt");
-            writer.WriteToFile(gp_dut_dx_OverTime, outputPath + $@"gp_dut_dx_OverTime.txt");
+/*            writer.WriteToFile(gp_dut_dx_OverTime, outputPath + $@"gp_dut_dx_OverTime.txt");
             writer.WriteToFile(gp_dvt_dy_OverTime, outputPath + $@"gp_dvt_dy_OverTime.txt");
             writer.WriteToFile(gp_dwt_dz_OverTime, outputPath + $@"gp_dwt_dz_OverTime.txt");
-            writer.WriteToFile(gp_div_v_OverTime, outputPath +  $@"gp_div_v_OverTime_.txt");
+            writer.WriteToFile(gp_div_v_OverTime, outputPath +  $@"gp_div_v_OverTime_.txt");*/
 
 
 
             writer.WriteToFile(p_i, outputPath + $@"p_i.txt");
-            writer.WriteToFile(gp_dP_dx_OverTime, outputPath + $@"gp_dP_dx_OverTime.txt");
+/*            writer.WriteToFile(gp_dP_dx_OverTime, outputPath + $@"gp_dP_dx_OverTime.txt");
             writer.WriteToFile(gp_dP_dy_OverTime, outputPath + $@"gp_dP_dy_OverTime.txt");
-            writer.WriteToFile(gp_dP_dz_Overtime, outputPath + $@"gp_dP_dz_Overtime.txt");*//*
+            writer.WriteToFile(gp_dP_dz_Overtime, outputPath + $@"gp_dP_dz_Overtime.txt");*/
 
 
             //var path = outputPath+"dp_dxi_mslv.csv";
-            CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(dp_dxi), "../../../StaggeredSolutionPresDynamex7ref/dp_dxi_GP_mslv.csv");
+            //CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(dp_dxi), "../../../StaggeredSolutionPresDynamex7ref/dp_dxi_GP_mslv.csv");
             CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(displacements), "../../../StaggeredSolutionPresDynamex7ref/displacements_nodes_mslv.csv");
             CSVExporter.ExportVectorToCSV(p_i, "../../../StaggeredSolutionPresDynamex7ref/pi_nodes_mslv.csv");
-            CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(divVelocity), "../../../StaggeredSolutionPresDynamex7ref/dut_dxi_GP_mslv.csv");
+            //CSVExporter.ExportMatrixToCSV(CSVExporter.ConverVectorsTo2DArray(divVelocity), "../../../StaggeredSolutionPresDynamex7ref/dut_dxi_GP_mslv.csv");
 
+
+            Assert.True(ResultChecker.CheckResults(structuralResultsZ, expectedDisplacments(), 1E-6));
+            Assert.True(ResultChecker.CheckResults(p_i, expectedPressurevalues(), 1E-6));
+            /*            Assert.True(ResultChecker.CheckResults(gp_dut_dx_OverTime, expected_dutdx_values(), 1E-6));
+                        Assert.True(ResultChecker.CheckResults(gp_dvt_dy_OverTime, expected_dvtdy_values(), 1E-6));
+                        Assert.True(ResultChecker.CheckResults(gp_dwt_dz_OverTime, expected_dwtdz_values(), 1E-6));
+                        Assert.True(ResultChecker.CheckResults(gp_div_v_OverTime, expected_div_vs_values(), 1E-6));
+                        Assert.True(ResultChecker.CheckResults(gp_dP_dx_OverTime, expected_dpdx_values(), 1E-6));
+                        Assert.True(ResultChecker.CheckResults(gp_dP_dy_OverTime, expected_dpdy_values(), 1E-6));
+                        Assert.True(ResultChecker.CheckResults(gp_dP_dz_Overtime, expected_dpdz_values(), 1E-6));*/
         }
 
 
@@ -544,13 +544,5 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         {
             return new double[10] ;
         }
-
-
-
-
-
-
-
     }
 }
-*/

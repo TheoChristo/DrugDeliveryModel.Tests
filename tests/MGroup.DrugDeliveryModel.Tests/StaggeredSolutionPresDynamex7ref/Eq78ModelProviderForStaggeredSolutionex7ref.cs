@@ -212,10 +212,26 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
         internal void UpdatePressureDivergenceDictionary(Dictionary<int, double[][]> pressureTensorDivergenceAtElementGaussPoints, ISolver solver, IChildAnalyzer childAnalyzer, Model model, GlobalAlgebraicModel<Matrix> algebraicModel)
         {
             var p = childAnalyzer.CurrentAnalysisResult;
-            var interpolation = InterpolationTet4.UniqueInstance;
-            var quadrature = TetrahedronQuadrature.Order1Point1;
+            IIsoparametricInterpolation3D interpolation;
+            IQuadrature3D quadrature;
             foreach (var elem in model.ElementsDictionary.Values)
             {
+                if (modelReader.ElementConnectivity[elem.ID].Item1 == CellType.Tet4)
+                {
+                    interpolation = InterpolationTet4.UniqueInstance;
+                    quadrature = TetrahedronQuadrature.Order1Point1;
+                }
+                else if (modelReader.ElementConnectivity[elem.ID].Item1 == CellType.Hexa8)
+                {
+                    interpolation = InterpolationHexa8.UniqueInstance;
+                    quadrature = GaussLegendre3D.GetQuadratureWithOrder(2, 2, 2);
+                }
+                else if (modelReader.ElementConnectivity[elem.ID].Item1 == CellType.Wedge6)
+                {
+                    interpolation = InterpolationWedge6.UniqueInstance;
+                    quadrature = WedgeQuadrature.Points8;
+                }
+                else throw new ArgumentException("Wrong Cell Type");
                 var elemSoultion = algebraicModel.ExtractElementVector(p, elem);
                 pressureTensorDivergenceAtElementGaussPoints[elem.ID] = UpdatePressureAndGradientsOfElement(elemSoultion, interpolation, quadrature, elem);
             }

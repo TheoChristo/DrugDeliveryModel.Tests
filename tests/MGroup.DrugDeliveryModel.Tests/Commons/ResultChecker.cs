@@ -17,6 +17,7 @@ namespace MGroup.FEM.ConvectionDiffusion.Tests.Commons
             }
 
             var isAMatch = true;
+            var maxerror = 1000d;
             for (int i = 0; i < numericalSolution.Length; i++)
             {
                 var error = Math.Abs((prescribedSolution[i] - numericalSolution[i]) / prescribedSolution[i]);
@@ -25,7 +26,9 @@ namespace MGroup.FEM.ConvectionDiffusion.Tests.Commons
                 {
                     isAMatch = false;
                 }
+                maxerror = Math.Max(maxerror, error);
             }
+            Console.WriteLine("maxError:" + maxerror);
             if (isAMatch == true)
             {
                 Console.WriteLine("MSolve Solution matches prescribed solution");

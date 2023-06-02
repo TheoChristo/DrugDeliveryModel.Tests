@@ -104,45 +104,12 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             //---------------------------------------
             // WARNING: do not initialize shared dictionarys because they have been passed by refernce in ewuationModel bilders.
             //---------------------------------------
-
-
-            // update Shared quantities of Coupled model
-            //foreach (var elem in reader.ElementConnectivity)
-            //{ 
-            //    lambda[elem.Key]= lambda0;
-            //}
-            
+          
 
             eq78ModelProviderForCouplin.UpdatePressureDivergenceDictionary(pressureTensorDivergenceAtElementGaussPoints, ParentSolvers[0], NLAnalyzers[0], model[0], eq78ModelProviderForCouplin.algebraicModel);
-            //foreach (var elem in reader.ElementConnectivity)
-            //{
-            //    pressureTensorDivergenceAtElementGaussPoints[elem.Key] = ((ConvectionDiffusionElement3D)model[0].ElementsDictionary[elem.Key]).pressureTensorDivergenceAtGaussPoints; // TODO Use the UpdatePressureAndGradients() method in the end of this class
-            //}
 
-
-            //foreach (var elem in reader.ElementConnectivity)
-            //{
-            //    div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
-            //}
-            //foreach (var elem in reader.ElementConnectivity)
-            //{
-            //    SolidVelocityAtElementGaussPoints[elem.Key] =
-            //        ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocity;
-            //    SolidVelocityAtElementGaussPoints[elem.Key][0][0] =
-            //        SolidVelocityAtElementGaussPoints[elem.Key][0][0] * 1000;
-            //    SolidVelocityAtElementGaussPoints[elem.Key][0][1] =
-            //        SolidVelocityAtElementGaussPoints[elem.Key][0][1] * 1000;
-            //    SolidVelocityAtElementGaussPoints[elem.Key][0][2] =
-            //        SolidVelocityAtElementGaussPoints[elem.Key][0][2] * 1000;
-            //}
-
-            //for (int j = 0; j < ParentAnalyzers.Length; j++)
-            //{
-                (ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
+            (ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
             
-            //}
-            //var velocities = eq9ModelProvider.GetVelocities();
-
             model[1].BoundaryConditions.Clear();
             var velocities = eq9ModelProvider.GetVelocities2();
 
@@ -198,21 +165,6 @@ namespace MGroup.DrugDeliveryModel.Tests.Integration
             if (!(CurrentTimeStep == 0))
             {
                 eq78ModelProviderForCouplin.UpdatePressureDivergenceDictionary(pressureTensorDivergenceAtElementGaussPoints, ParentSolvers[0], NLAnalyzers[0], model[0], eq78ModelProviderForCouplin.algebraicModel);
-                //foreach (var elem in reader.ElementConnectivity)
-                //{
-                //    pressureTensorDivergenceAtElementGaussPoints[elem.Key] = ((ConvectionDiffusionElement3D)model[0].ElementsDictionary[elem.Key]).pressureTensorDivergenceAtGaussPoints; // TODO Use the UpdatePressureAndGradients() method in the end of this class
-                //}
-
-                //foreach (var elem in reader.ElementConnectivity)
-                //{
-                //    div_vs[elem.Key] = ((ContinuumElement3DGrowth)model[1].ElementsDictionary[elem.Key]).velocityDivergence;
-                //}
-                //for (int j = 0; j < ParentAnalyzers.Length; j++)
-                //{
-                //(ParentAnalyzers[1] as NewmarkDynamicAnalyzer).AdvanceStep();
-
-                //}
-                //var velocities = eq9ModelProvider.GetVelocities();
 
                 model[1].BoundaryConditions.Clear();
                 var velocities = eq9ModelProvider.GetVelocities2();

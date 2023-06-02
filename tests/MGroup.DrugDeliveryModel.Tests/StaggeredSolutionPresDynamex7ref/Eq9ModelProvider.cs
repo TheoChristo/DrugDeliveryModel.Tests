@@ -27,6 +27,7 @@ using MGroup.MSolve.Solution.LinearSystem;
 using TriangleNet.Tools;
 using MGroup.MSolve.Numerics.Interpolation.Jacobians;
 using MGroup.MSolve.Discretization.BoundaryConditions;
+using MGroup.MSolve.Discretization;
 
 namespace MGroup.DrugDeliveryModel.Tests.EquationModels
 {
@@ -146,9 +147,9 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
                 var domainId = elementConnectivity.Value.Item3;
                 var element = elementFactory.CreateNonLinearElementGrowt(elementConnectivity.Value.Item1, elementConnectivity.Value.Item2, domainId == 0 ? materialTumor : materialNormal, dynamicMaterial, lambda[elementConnectivity.Key]);
                 //element.volumeForce = pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0];
-                var volumeForceX = new ElementDistributedLoad(element, StructuralDof.TranslationX, pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][0]);
-                var volumeForceY = new ElementDistributedLoad(element, StructuralDof.TranslationY, pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][1]);
-                var volumeForceZ = new ElementDistributedLoad(element, StructuralDof.TranslationZ, pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][2]);
+                var volumeForceX = new ElementDistributedLoad(element, StructuralDof.TranslationX,- pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][0]);
+                var volumeForceY = new ElementDistributedLoad(element, StructuralDof.TranslationY, -pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][1]);
+                var volumeForceZ = new ElementDistributedLoad(element, StructuralDof.TranslationZ,- pressureTensorDivergenceAtElementGaussPoints[elementConnectivity.Key][0][2]);
                 volumeLoads.AddRange(new [] {volumeForceX, volumeForceY, volumeForceZ});
                 element.ID = elementConnectivity.Key;
                 //if (elementSavedDisplacementsIsInitialized) { element.lastConvergedDisplacements = elementslastConvergedDisplacements[element.ID]; }
@@ -233,9 +234,9 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             modelVelocities.CheckForCompatibility=false;
 
 
-            var interpolation = InterpolationTet4.UniqueInstance;
-            var quadrature = TetrahedronQuadrature.Order1Point1;
-            
+            IIsoparametricInterpolation3D interpolation;
+            IQuadrature3D quadrature;
+
             int nGaussPoints = 1;
             var velcocities = new Dictionary<int, double[][]>();
 
@@ -268,6 +269,24 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
                 var velocity = new double[nGaussPoints][];
 
                 int gausspoinNo = 0; // anti gia loop to ntegation.Gausspoint1
+
+                if (elem.Value.Item1 == CellType.Tet4)
+                {
+                    interpolation = InterpolationTet4.UniqueInstance;
+                    quadrature = TetrahedronQuadrature.Order1Point1;
+                }
+                else if (elem.Value.Item1 == CellType.Hexa8)
+                {
+                    interpolation = InterpolationHexa8.UniqueInstance;
+                    quadrature = GaussLegendre3D.GetQuadratureWithOrder(2, 2, 2);
+                }
+                else if (elem.Value.Item1 == CellType.Wedge6)
+                {
+                    interpolation = InterpolationWedge6.UniqueInstance;
+                    quadrature = WedgeQuadrature.Points8;
+                }
+                else throw new ArgumentException("Wrong Cell Type");
+
                 var shapeFunctionValues = interpolation.EvaluateFunctionsAt(quadrature.IntegrationPoints[gausspoinNo]);
 
 
@@ -300,8 +319,8 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             var velocityNodalResults = algebraicModel.ExtractAllResults(modelVelocities);
             var velocityNodalData = velocityNodalResults.Data;
 
-            var interpolation = InterpolationTet4.UniqueInstance;
-            var quadrature = TetrahedronQuadrature.Order1Point1;
+            IIsoparametricInterpolation3D interpolation;
+            IQuadrature3D quadrature;
 
             int nGaussPoints = 1;
             var velcocities = new Dictionary<int, double[][]>();
@@ -311,6 +330,22 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
                 var nodes = elem.Value.Item2;
                 var nodalVelocities = new double[3 * nodes.Count()];
 
+                if (elem.Value.Item1 == CellType.Tet4)
+                {
+                    interpolation = InterpolationTet4.UniqueInstance;
+                    quadrature = TetrahedronQuadrature.Order1Point1;
+                }
+                else if (elem.Value.Item1 == CellType.Hexa8)
+                {
+                    interpolation = InterpolationHexa8.UniqueInstance;
+                    quadrature = GaussLegendre3D.GetQuadratureWithOrder(2, 2, 2);
+                }
+                else if (elem.Value.Item1 == CellType.Wedge6)
+                {
+                    interpolation = InterpolationWedge6.UniqueInstance;
+                    quadrature = WedgeQuadrature.Points8;
+                }
+                else throw new ArgumentException("Wrong Cell Type");
 
                 for (int i = 0; i < nodes.Length; i++)
                 {
@@ -362,8 +397,8 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
             var velocityNodalResults = algebraicModel.ExtractAllResults(modelVelocities);
             var velocityNodalData = velocityNodalResults.Data;
 
-            var interpolation = InterpolationTet4.UniqueInstance;
-            var quadrature = TetrahedronQuadrature.Order1Point1;
+            IIsoparametricInterpolation3D interpolation;
+            IQuadrature3D quadrature;
 
             int nGaussPoints = 1;
             var velcocities = new Dictionary<int, double[]>();
@@ -373,6 +408,22 @@ namespace MGroup.DrugDeliveryModel.Tests.EquationModels
                 var nodes = elem.Value.Item2;
                 var nodalVelocities = new double[3 * nodes.Count()];
 
+                if (elem.Value.Item1 == CellType.Tet4)
+                {
+                    interpolation = InterpolationTet4.UniqueInstance;
+                    quadrature = TetrahedronQuadrature.Order1Point1;
+                }
+                else if (elem.Value.Item1 == CellType.Hexa8)
+                {
+                    interpolation = InterpolationHexa8.UniqueInstance;
+                    quadrature = GaussLegendre3D.GetQuadratureWithOrder(2, 2, 2);
+                }
+                else if (elem.Value.Item1 == CellType.Wedge6)
+                {
+                    interpolation = InterpolationWedge6.UniqueInstance;
+                    quadrature = WedgeQuadrature.Points8;
+                }
+                else throw new ArgumentException("Wrong Cell Type");
 
                 for (int i = 0; i < nodes.Length; i++)
                 {
